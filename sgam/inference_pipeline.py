@@ -31,7 +31,6 @@ class InfiniteSceneGeneration:
         self.discriminator_loss_weight = discriminator_loss_weight
         self.topk = topk
         self.recon_on_visible = recon_on_visible
-        self.output_dim = output_dim
         self.use_rgbd_integration = use_rgbd_integration
         self.composite = composite
         self.step_size_denom = step_size_denom
@@ -44,11 +43,11 @@ class InfiniteSceneGeneration:
 
         if data == 'clevr-infinite':
             image_resolution = (256, 256)
-            output_dim = (30, 30)
+            self.output_dim = (30, 30)
             shutil.copytree('templates/clevr-infinite', grid_transform_path)
         elif data == 'google_earth':
             image_resolution = (256, 256)
-            output_dim = (100, 1)
+            self.output_dim = (100, 1)
             os.makedirs(grid_transform_path, exist_ok=True)
             img_fn = sorted(Path('templates/google_earth/seed0').glob("im*"))[0]
             shutil.copy(img_fn,
@@ -57,6 +56,7 @@ class InfiniteSceneGeneration:
                         grid_transform_path / img_fn.name.replace('im', 'dm').replace('.png', '_00_00.npy'))
         else:
             raise NotImplementedError
+        output_dim = self.output_dim
         self.image_resolution = image_resolution
 
         if scene_dirs is not None:
