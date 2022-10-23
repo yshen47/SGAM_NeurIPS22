@@ -31,6 +31,7 @@ Try [our Colab codebook](https://colab.research.google.com/drive/1nW5oHKsb0e01Bd
      ```
 ## Data
 ### CLEVR-Infinite Dataset 
+  - Note the depth is nonlinear when we render from blender. Checkout how we convert the depth from nonlinear to linear in line 103 of data/clevr-infinite.py
   - To get a quick glance at our dataset, here is [one tiny scene example](https://drive.google.com/drive/folders/1Y2q3GQMFu8TUgdnWbDXi7-ErRPGy6QwG?usp=sharing). 
   - Two validation scene data can be downloaded from [this link](https://drive.google.com/drive/folders/1ZjG8sYQWtQKPewlqcCbW6JyypwSapZDD?usp=sharing).
   - Our training, validation and testing dataset is available at [this link](https://drive.google.com/file/d/1IfFav7itzrYIhmwJOcbnPaGd0683nkSA/view?usp=sharing) for downloading.
