@@ -24,15 +24,13 @@ import torch.nn.functional as F
 class InfiniteSceneGeneration:
 
     def __init__(self,
-                 dynamic_model, name, data, scene_dirs, composite=False, topk=1,
-                 output_dim=(200, 1), step_size_denom=2, use_rgbd_integration=False, use_discriminator_loss=False,
+                 dynamic_model, name, data, scene_dirs, composite=False, topk=1, step_size_denom=2, use_rgbd_integration=False, use_discriminator_loss=False,
                  discriminator_loss_weight=0, recon_on_visible=False, offscreen_rendering=True):
         self.use_discriminator_loss = use_discriminator_loss
         self.offscreen_rendering = offscreen_rendering
         self.discriminator_loss_weight = discriminator_loss_weight
         self.topk = topk
         self.recon_on_visible = recon_on_visible
-        self.output_dim = output_dim
         self.use_rgbd_integration = use_rgbd_integration
         self.composite = composite
         self.step_size_denom = step_size_denom
@@ -45,9 +43,11 @@ class InfiniteSceneGeneration:
 
         if data == 'clevr-infinite':
             image_resolution = (256, 256)
+            self.output_dim = (30, 30)
             shutil.copytree('templates/clevr-infinite', grid_transform_path)
         elif data == 'google_earth':
             image_resolution = (256, 256)
+            self.output_dim = (100, 1)
             os.makedirs(grid_transform_path, exist_ok=True)
             img_fn = sorted(Path('templates/google_earth/seed0').glob("im*"))[0]
             shutil.copy(img_fn,
@@ -56,6 +56,7 @@ class InfiniteSceneGeneration:
                         grid_transform_path / img_fn.name.replace('im', 'dm').replace('.png', '_00_00.npy'))
         else:
             raise NotImplementedError
+        output_dim = self.output_dim
         self.image_resolution = image_resolution
 
         if scene_dirs is not None:
@@ -114,7 +115,7 @@ class InfiniteSceneGeneration:
                 vox_length = 0.05
                 self.volume = o3d.pipelines.integration.ScalableTSDFVolume(
                     voxel_length=vox_length,
-                    sdf_trunc=100 * vox_length,
+                    sdf_trunc=10 * vox_length,
                     color_type=o3d.pipelines.integration.TSDFVolumeColorType.RGB8)
             elif data in ['google_earth', 'kitti360']:
                 vox_length = 0.01
@@ -128,8 +129,8 @@ class InfiniteSceneGeneration:
             if not self.offscreen_rendering:
                 self.vis = o3d.visualization.Visualizer()
                 if data == 'clevr-infinite':
-                    self.vis.create_window(width=256, height=64, visible=True)
-                elif data in ['google_earth', 'kitti360']:
+                    self.vis.create_window(width=256, height=256, visible=True)
+                elif data in ['google_earth']:
                     self.vis.create_window(width=256, height=256, visible=True)
                 else:
                     raise NotImplementedError
@@ -783,7 +784,7 @@ class InfiniteSceneGeneration:
 
         if self.offscreen_rendering:
             if self.data == 'clevr-infinite':
-                vis = o3d.visualization.rendering.OffscreenRenderer(256, 64, headless=True)
+                vis = o3d.visualization.rendering.OffscreenRenderer(256, 256, headless=True)
             elif self.data == 'google_earth':
                 vis = o3d.visualization.rendering.OffscreenRenderer(256, 256, headless=True)
             else:
@@ -1019,7 +1020,7 @@ class InfiniteSceneGeneration:
                     area_counts[curr_index] = 0
                     check_nearby((i, j))
                     curr_index += 1
-        res = np.zeros([64, 256])
+        res = np.zeros([256, 256])
         for k, v in area_counts.items():
             if v > 4000:
                 res += (visited == k)

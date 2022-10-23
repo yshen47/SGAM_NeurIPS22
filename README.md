@@ -15,26 +15,6 @@ We present a new 3D scene generation framework that simultaneously generates sen
 ## Quickstart
 Try [our Colab codebook](https://colab.research.google.com/drive/1nW5oHKsb0e01BdFU-EjsNqJmQNNo294h?usp=sharing) to play our trained models on sample CLEVR-Infinite and GoogleEarth-Infinite dataset!
 ## Installment
-- Docker Image (Recommended): 
-  1. Prerequisite: make sure you have [nvidia-docker](https://github.com/NVIDIA/nvidia-docker) installed, and a nvidia GPU on your device. 
-  2. Run the following command to get our docker image:
-     ```angular2html
-     docker pull yshen47/sgam:latest
-     ```
-  3. Clone our github repository into directory [proj_root].
-     ```angular2html
-     git clone git@github.com:yshen47/SGAM.git
-  4. Copy the trained_models directory located in /root/trained_models inside the docker container to [proj_root]/trained_models. 
-     Note that the trained checkpoints inside the docker image are the same as the ones from [here](#trained-models). 
-
-  5. Run the following command to start the SGAM docker container at directory [proj_root]. This command will mount the SGAM codebase to the container
-     ```angular2html
-     nvidia-docker run -it --rm --gpus all --volume $PWD:/root/sgam yshen47/sgam:latest
-     ```
-  6. If everything runs correctly, then you should be able to run the following command and get unrolling results at directory grid_res/
-     ```angular2html
-     python main_scene_generation.py
-     ```
   
 - Manual Installment (Only tested on Ubuntu 18.04):
 
@@ -63,7 +43,7 @@ Try [our Colab codebook](https://colab.research.google.com/drive/1nW5oHKsb0e01Bd
       ```
       /snap/bin/blender random_scene.blend
       ```
-    3. Specify output directory in line 213
+    3. Specify output directory in line 253
     
     4. Run the following command to render. You can change the iteration number to set the number of random scene.
     ```
@@ -75,8 +55,8 @@ Try [our Colab codebook](https://colab.research.google.com/drive/1nW5oHKsb0e01Bd
     ```
       
 ### GoogleEarth-Infinite Dataset
+  - Please reach out us by email if you hope to get access to the dataset.
 
-### KITTI360 Dataset
 ## Trained Models
 We provide our trained model on [GoogleEarth-Infinite](https://drive.google.com/drive/folders/1XzyLEFOWOktIgWbt3elMr5O6hbSWB7X3?usp=sharing) and [CLEVR-Infinite](https://drive.google.com/drive/folders/1AF5Q-Wq19YBAxFFjGuH6nWR-BPaKHmT7?usp=sharing):
    ```
@@ -103,12 +83,12 @@ python train_generative_sensing_model.py --base configs/conditional_generation/X
 ## Inference
 ### CLEVR-Infinite
 ```angular2html
-python main_scene_generation.py --dataset="clevr-infinite"
+python main_scene_generation.py --dataset="clevr-infinite" --use_rgbd_integration True
 ```
 
 ### GoogleEarth-Infinite
 ```angular2html
-python main_scene_generation.py --dataset="google_earth"
+python main_scene_generation.py --dataset="google_earth" --use_rgbd_integration True
 ```
 ## Acknowledgement
 We thank [Vlas Zyrianov](https://www.zyrianov.org/) for his feedback on our paper drafts. 

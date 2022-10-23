@@ -51,6 +51,6 @@ data:
     dataset: clevr-infinite
     depth_range: [ 7, 16 ]
     phase: codebook
-    dataset_dir: /projects/perception/datasets/blender_3d_large # /media/yuan/T7_red/blender_3d_large
+    dataset_dir: /projects/perception/datasets/blender_3d_large # To fill in dataset directory
     use_depth: True
     image_resolution: [256, 256]

@@ -6,7 +6,7 @@ model:
     phase: conditional_generation
     embed_dim: 256
     n_embed: 4096
-    ckpt_path: trained_models/google_earth_256x256/stage_1_300k.ckpt
+#    ckpt_path: trained_models/google_earth_256x256/stage_1_300k.ckpt
     vq_step_threshold: 0
     use_extrapolation_mask: True
 
@@ -49,6 +49,6 @@ data:
     dataset: google_earth
     depth_range: [0.099975586, 4.765625]
     phase: conditional_generation
-    dataset_dir: /projects/perception/datasets/GoogleEarthDataset
+    dataset_dir: /projects/perception/datasets/GoogleEarthDataset # To fill in dataset directory
     use_depth: True
     image_resolution: [256, 256]
