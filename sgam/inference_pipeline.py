@@ -24,7 +24,7 @@ class InfiniteSceneGeneration:
 
     def __init__(self,
                  dynamic_model, data, topk=1, step_size_denom=2, use_rgbd_integration=False, use_discriminator_loss=False,
-                 discriminator_loss_weight=0, recon_on_visible=False, offscreen_rendering=True, output_dim=None, seed_index=0):
+                 discriminator_loss_weight=0, recon_on_visible=False, offscreen_rendering=True, output_dim=None, seed_index=0, num_src=None):
         self.use_discriminator_loss = use_discriminator_loss
         self.offscreen_rendering = offscreen_rendering
         self.discriminator_loss_weight = discriminator_loss_weight
@@ -66,7 +66,7 @@ class InfiniteSceneGeneration:
             ])
             self.K_inv = np.linalg.inv(self.K)
             trajectory_shape = 'grid'
-            self.num_src = 5 if isinstance(dynamic_model, VQModel) else 1
+            self.num_src = (5 if num_src is None else num_src) if isinstance(dynamic_model, VQModel) else 1
             self.curr = 1
         elif data == 'google_earth':
             trajectory_shape = 'grid'
@@ -77,8 +77,8 @@ class InfiniteSceneGeneration:
             ])
             self.K[0] = self.K[0] * self.image_resolution[1] / 512
             self.K[1] = self.K[1] * self.image_resolution[0] / 512
-            self.num_src = 3 if isinstance(dynamic_model, VQModel) else 1
-            self.curr = 3
+            self.num_src = (3 if num_src is None else num_src) if isinstance(dynamic_model, VQModel) else 1
+            self.curr = 1
         else:
             raise NotImplementedError
 
@@ -185,7 +185,6 @@ class InfiniteSceneGeneration:
                     "K_path": f"{output_folder}/K_{i:05d}.npy",
                     "t_path": f"{output_folder}/t_{i:05d}.npy",
                     "visited": (i, j) in known_map,
-                    "consistency_score": 99999,
                     "grid_coord": (i, j),
                 }
                 if (i, j) in known_map:
@@ -270,7 +269,6 @@ class InfiniteSceneGeneration:
                 "K_path": f"{output_folder}/K_{i:05d}.npy",
                 "t_path": f"{output_folder}/t_{i:05d}.npy",
                 "visited": (i, 0) in known_map,
-                "consistency_score": 99999,
                 "grid_coord": (i, 0),
             }
             if (i, 0) in known_map:
@@ -343,7 +341,6 @@ class InfiniteSceneGeneration:
                 "K_path": f"{output_folder}/K_{i:05d}.npy",
                 "t_path": f"{output_folder}/t_{i:05d}.npy",
                 "visited": (i, 0) in known_map,
-                "consistency_score": 99999,
                 "grid_coord": (i, 0),
             }
             if (i, 0) in known_map:
@@ -403,7 +400,6 @@ class InfiniteSceneGeneration:
                 "K_path": f"{output_folder}/K_{i:05d}.npy",
                 "t_path": f"{output_folder}/t_{i:05d}.npy",
                 "visited": (i, 0) in known_map,
-                "consistency_score": 99999,
                 "grid_coord": (i, 0),
             }
 
@@ -488,7 +484,6 @@ class InfiniteSceneGeneration:
                 # add at end of the list
                 res.append((i if j % 2 == 0 else self.output_dim[0]-i-1, j))
         self.transform_grid[res[0][0]][res[0][1]]['visited'] = True
-        self.transform_grid[res[0][0]][res[0][1]]['consistency_score'] = 0
         return res
 
     def next_pose(self, curr):
@@ -503,8 +498,8 @@ class InfiniteSceneGeneration:
                 candidate_coord = self._ordered_grid_coords[i]
                 candidate_pose = self.transform_grid[candidate_coord[0]][candidate_coord[1]]
                 if candidate_pose['visited'] and np.linalg.norm(candidate_pose['position']-tgt_pose['position']) <= (0.3 if self.data != 'clevr-infinite' else 1):
-                    src_grid_coords.append((candidate_coord, candidate_pose['consistency_score'], np.linalg.norm(candidate_pose['position']-tgt_pose['position'])))
-            src_grid_coords = sorted(src_grid_coords, key=lambda x: x[2])
+                    src_grid_coords.append((candidate_coord, np.linalg.norm(candidate_pose['position']-tgt_pose['position'])))
+            src_grid_coords = sorted(src_grid_coords, key=lambda x: x[1])
             src_grid_coords = src_grid_coords[:self.num_src]
             src_grid_coords = [src_grid_coord[0] for src_grid_coord in src_grid_coords]
         else:
@@ -949,10 +944,6 @@ class InfiniteSceneGeneration:
             self.grid_transform_path / f"K_{index:05d}{suffix}.npy")
         self.transform_grid[tgt_pose_grid_coord[0]][tgt_pose_grid_coord[1]]['t_path'] = str(
             self.grid_transform_path / f"t_{index:05d}{suffix}.npy")
-        # self.transform_grid[tgt_pose_grid_coord[0]][tgt_pose_grid_coord[1]]['consistency_score'] = consistency_score
-        # self.total_inconsistency += consistency_score
-        # print('average_inconsisntency: ', self.total_inconsistency/self.curr)
-
 
     def find_extrapolation_region(self, extrapolation_mask):
         visited = np.zeros(extrapolation_mask.shape)
