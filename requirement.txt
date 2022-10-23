@@ -2,7 +2,7 @@ omegaconf==2.0.0
 scikit-image==0.19.2
 matplotlib==3.5.1
 autolab_core==1.1.1
-opencv-python==4.5.5.64
+opencv-python==4.6.0
 albumentations==1.1.0
 wandb==0.12.11
 open3d==0.15.2
