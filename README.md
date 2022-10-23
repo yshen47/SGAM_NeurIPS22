@@ -43,7 +43,7 @@ Try [our Colab codebook](https://colab.research.google.com/drive/1nW5oHKsb0e01Bd
       ```
       /snap/bin/blender random_scene.blend
       ```
-    3. Specify output directory in line 213
+    3. Specify output directory in line 253
     
     4. Run the following command to render. You can change the iteration number to set the number of random scene.
     ```
@@ -55,6 +55,7 @@ Try [our Colab codebook](https://colab.research.google.com/drive/1nW5oHKsb0e01Bd
     ```
       
 ### GoogleEarth-Infinite Dataset
+  - Please contact us directly if you hope to get access to the data
 
 ## Trained Models
 We provide our trained model on [GoogleEarth-Infinite](https://drive.google.com/drive/folders/1XzyLEFOWOktIgWbt3elMr5O6hbSWB7X3?usp=sharing) and [CLEVR-Infinite](https://drive.google.com/drive/folders/1AF5Q-Wq19YBAxFFjGuH6nWR-BPaKHmT7?usp=sharing):
