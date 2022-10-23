@@ -11,7 +11,6 @@ from sgam.generative_sensing_module.modules.diffusionmodules.model import Encode
 from sgam.generative_sensing_module.modules.vqvae.quantize import VectorQuantizer2 as VectorQuantizer
 from sgam.generative_sensing_module.modules.misc.metrics import *
 from sgam.generative_sensing_module.modules.losses.lpips import LPIPS
-import PIL
 import torch
 from scipy.cluster.vq import kmeans2
 
