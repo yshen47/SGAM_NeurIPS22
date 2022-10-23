@@ -819,9 +819,6 @@ class InfiniteSceneGeneration:
 
         # o3d.visualization.draw_geometries([mesh])
         # integrated_tgt_depth[integrated_tgt_depth==0] = 999999
-        plt.imshow(integrated_tgt_depth)
-        plt.title("rgbd integrated tgt depth")
-        plt.show()
 
         return integrated_tgt_depth
 
