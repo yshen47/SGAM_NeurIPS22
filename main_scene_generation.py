@@ -35,6 +35,9 @@ if __name__ == '__main__':
     parser.add_argument('--use_rgbd_integration',  type=bool,
                         default=True,
                         help='an integer for the accumulator')
+    parser.add_argument('--seed_index',  type=str,
+                        default="0",
+                        help='seed index for initial rgbd pose')
     parser.add_argument('--offscreen_rendering',  type=bool,
                         default=True,
                         help='offscreen_rendering is necessary when used in colab or docker environment. ')
@@ -45,7 +48,7 @@ if __name__ == '__main__':
     np.random.seed(29)
     torch.random.manual_seed(3)
     framework = InfiniteSceneGeneration(model, data,
-                                        seed_index=0,
+                                        seed_index=args.seed_index,
                                         use_rgbd_integration=args.use_rgbd_integration,
                                         offscreen_rendering=args.offscreen_rendering)
     framework.expand_to_inf()
