@@ -197,7 +197,6 @@ class VQModel(pl.LightningModule):
             x = batch['warped_tgt_features']
             warped_depth = batch['warped_tgt_depth'][:, None]
             extrapolation_mask = (warped_depth <= 0)
-            print("Use RGB-D integration")
         else:
             warped_depth, x, extrapolation_mask, mask, cur_fused_features, idx, projected_features = render_projection_from_srcs_fast(x_src,
                                                             dm_src[:, :, 0],
