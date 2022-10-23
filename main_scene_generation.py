@@ -44,7 +44,8 @@ if __name__ == '__main__':
     random.seed(10)
     np.random.seed(29)
     torch.random.manual_seed(3)
-    framework = InfiniteSceneGeneration(model, f'{data}', data, None, 0,
+    framework = InfiniteSceneGeneration(model, data,
+                                        seed_index=0,
                                         use_rgbd_integration=args.use_rgbd_integration,
                                         offscreen_rendering=args.offscreen_rendering)
     framework.expand_to_inf()

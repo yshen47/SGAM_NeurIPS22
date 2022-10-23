@@ -23,19 +23,19 @@ import torch.nn.functional as F
 class InfiniteSceneGeneration:
 
     def __init__(self,
-                 dynamic_model, name, data, scene_dirs, composite=False, topk=1, step_size_denom=2, use_rgbd_integration=False, use_discriminator_loss=False,
-                 discriminator_loss_weight=0, recon_on_visible=False, offscreen_rendering=True, output_dim=None):
+                 dynamic_model, data, topk=1, step_size_denom=2, use_rgbd_integration=False, use_discriminator_loss=False,
+                 discriminator_loss_weight=0, recon_on_visible=False, offscreen_rendering=True, output_dim=None, seed_index=0):
         self.use_discriminator_loss = use_discriminator_loss
         self.offscreen_rendering = offscreen_rendering
         self.discriminator_loss_weight = discriminator_loss_weight
+        self.seed_index = seed_index
         self.topk = topk
         self.recon_on_visible = recon_on_visible
         self.use_rgbd_integration = use_rgbd_integration
-        self.composite = composite
         self.step_size_denom = step_size_denom
         self.dynamic_model = dynamic_model
         self.data = data
-
+        name = data + "_seed" + str(seed_index)
         grid_transform_path = Path(f'grid_res/{name}')
         if os.path.exists(grid_transform_path):
             shutil.rmtree(grid_transform_path)
@@ -48,7 +48,7 @@ class InfiniteSceneGeneration:
             image_resolution = (256, 256)
             self.output_dim = (100, 1) if output_dim is None else output_dim
             os.makedirs(grid_transform_path, exist_ok=True)
-            img_fn = sorted(Path('templates/google_earth/seed0').glob("im*"))[0]
+            img_fn = sorted(Path(f'templates/google_earth/seed{seed_index}').glob("im*"))[0]
             shutil.copy(img_fn,
                         grid_transform_path / img_fn.name.replace('.png', '_00_00.png'))
             shutil.copy(str(img_fn).replace('im', 'dm').replace('.png', '.npy'),
@@ -58,9 +58,6 @@ class InfiniteSceneGeneration:
         output_dim = self.output_dim
         self.image_resolution = image_resolution
 
-        if scene_dirs is not None:
-            shutil.copy(str(scene_dirs[0]) + f'/dm_00000.npy', f'{grid_transform_path}/dm_00000_00_00.npy')
-            shutil.copy(str(scene_dirs[0]) + f'/im_00000.png', f'{grid_transform_path}/im_00000_00_00.png')
         if data == 'clevr-infinite':
             self.K = np.array([
                 [355.5555, 0, 128],
@@ -116,7 +113,7 @@ class InfiniteSceneGeneration:
                     voxel_length=vox_length,
                     sdf_trunc=10 * vox_length,
                     color_type=o3d.pipelines.integration.TSDFVolumeColorType.RGB8)
-            elif data in ['google_earth', 'kitti360']:
+            elif data in ['google_earth']:
                 vox_length = 0.01
                 self.volume = o3d.pipelines.integration.ScalableTSDFVolume(
                     voxel_length=vox_length,
@@ -852,7 +849,7 @@ class InfiniteSceneGeneration:
                     self.K[0][0] ** 2 + (self.K[0][2] - ys - 0.5) ** 2 + (self.K[1][2] - xs - 0.5) ** 2) / self.K[0][0]
         return dm_dst
 
-    def one_step_prediction(self, tgt_pose_grid_coord, save_res_to_disk=True, use_test_time_optimization=False): # return type can be either rgbd or feature
+    def one_step_prediction(self, tgt_pose_grid_coord, save_res_to_disk=True): # return type can be either rgbd or feature
         # tgt_pose_grid_coord = self.next_pose()
         src_pose_grid_coords, _ = self.get_src_grid_coords(tgt_pose_grid_coord)
         print(f"im_{self.curr:05d}.png", 'tgt_pose_grid_coord: ', tgt_pose_grid_coord, 'src_pose_grid_coords: ', src_pose_grid_coords)
@@ -875,43 +872,6 @@ class InfiniteSceneGeneration:
                                                                                               get_quantized_feature=True,
                                                                                               sample_number=1)
             x_sample_dets = x_sample_dets[0] # since sample number is 1
-        elif self.data == 'kitti360':
-            x_sample_dets, _, pre_quantized_features, quantized_features = self.dynamic_model(x,
-                                                                                              topk=None,
-                                                                                              extrapolation_mask=extrapolation_mask,
-                                                                                              get_pre_quantized_feature=True,
-                                                                                              get_quantized_feature=True)
-
-            if use_test_time_optimization:
-                pre_quantized_features = torch.from_numpy(pre_quantized_features.detach().cpu().numpy()).to(
-                    pre_quantized_features.device)
-                pre_quantized_features.requires_grad = True
-                opt_features = torch.optim.Adam([pre_quantized_features],
-                                                lr=1e-3, betas=(0.5, 0.9))
-                torch.set_grad_enabled(True)
-                # self.dynamic_model.train()
-                for i in range(self.optimization_iteration_num):
-                    quant, emb_loss, info = self.dynamic_model.quantize(pre_quantized_features)
-                    xrec_optimized = self.dynamic_model.decode(quant)
-                    aeloss, log_dict_ae = self.dynamic_model.loss(emb_loss, x, xrec_optimized, 0, self.dynamic_model.global_step,
-                                                    last_layer=self.dynamic_model.get_last_layer(), split="test_optimization",
-                                                    extrapolation_mask=extrapolation_mask, recon_on_visible=self.recon_on_visible)
-
-                    x_rec_features = \
-                    self.dynamic_model.encode(xrec_optimized, encoding_indices=None, extrapolation_mask=extrapolation_mask)[-1]
-                    feature_loss = F.l1_loss(x_rec_features, pre_quantized_features)
-                    total_loss = aeloss + feature_loss
-                    if self.use_discriminator_loss:
-                        total_loss = total_loss + log_dict_ae['test_optimization/g_loss'] * self.discriminator_loss_weight
-                    opt_features.zero_grad()
-                    total_loss.backward()
-                    print("total_loss: ", total_loss.item())
-                    opt_features.step()
-                torch.set_grad_enabled(False)
-                # self.dynamic_model.eval()
-                x_sample_dets = xrec_optimized
-            else:
-                x_sample_dets = x_sample_dets[None,]
         elif self.data == 'google_earth':
             x_sample_dets, _, pre_quantized_features, quantized_features = self.dynamic_model(x, topk=self.topk,
                                                                                               extrapolation_mask=extrapolation_mask,
