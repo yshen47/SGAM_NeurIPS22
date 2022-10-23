@@ -24,7 +24,7 @@ class InfiniteSceneGeneration:
 
     def __init__(self,
                  dynamic_model, name, data, scene_dirs, composite=False, topk=1, step_size_denom=2, use_rgbd_integration=False, use_discriminator_loss=False,
-                 discriminator_loss_weight=0, recon_on_visible=False, offscreen_rendering=True):
+                 discriminator_loss_weight=0, recon_on_visible=False, offscreen_rendering=True, output_dim=None):
         self.use_discriminator_loss = use_discriminator_loss
         self.offscreen_rendering = offscreen_rendering
         self.discriminator_loss_weight = discriminator_loss_weight
@@ -42,11 +42,11 @@ class InfiniteSceneGeneration:
 
         if data == 'clevr-infinite':
             image_resolution = (256, 256)
-            self.output_dim = (30, 30)
+            self.output_dim = (30, 30) if output_dim is None else output_dim
             shutil.copytree('templates/clevr-infinite', grid_transform_path)
         elif data == 'google_earth':
             image_resolution = (256, 256)
-            self.output_dim = (100, 1)
+            self.output_dim = (100, 1) if output_dim is None else output_dim
             os.makedirs(grid_transform_path, exist_ok=True)
             img_fn = sorted(Path('templates/google_earth/seed0').glob("im*"))[0]
             shutil.copy(img_fn,
