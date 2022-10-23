@@ -11,11 +11,6 @@ Unversity of Illinois at Urbana-Champaign<sup>1</sup>, Massachusetts Institute o
 ## TL;DR
 We present a new 3D scene generation framework that simultaneously generates sensor data at novel viewpoints and builds a 3D map. Our framework is illustrated in the diagram below. The GIF animation above is generated via SGAM with only the first RGB-D frame known.
 <img src="assets/overview.png" alt="drawing" width="700"/>
-
-## To-do:
-  1. docker environment setup with graphic user interface
-  2. sanity check on training with customzied dataset on SGAM
-  3. fine-tuning 256x256 GoogleEarth pre-trained checkpoints. 
   
 ## Quickstart
 Try [our Colab codebook](https://colab.research.google.com/drive/1nW5oHKsb0e01BdFU-EjsNqJmQNNo294h?usp=sharing) to play our trained models on sample CLEVR-Infinite and GoogleEarth-Infinite dataset!
