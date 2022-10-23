@@ -103,12 +103,12 @@ python train_generative_sensing_model.py --base configs/conditional_generation/X
 ## Inference
 ### CLEVR-Infinite
 ```angular2html
-python main_scene_generation.py --dataset="clevr-infinite"
+python main_scene_generation.py --dataset="clevr-infinite" --use_rgbd_integration True
 ```
 
 ### GoogleEarth-Infinite
 ```angular2html
-python main_scene_generation.py --dataset="google_earth"
+python main_scene_generation.py --dataset="google_earth" --use_rgbd_integration True
 ```
 ## Acknowledgement
 We thank [Vlas Zyrianov](https://www.zyrianov.org/) for his feedback on our paper drafts. 
