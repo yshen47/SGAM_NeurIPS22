@@ -24,15 +24,12 @@ import torch.nn.functional as F
 class InfiniteSceneGeneration:
 
     def __init__(self,
-                 dynamic_model, name, data, scene_dirs, index_i, composite=False, topk=1,
-                 output_dim=(200, 1), step_size_denom=2, use_rgbd_integration=False,
-                 use_test_time_optimization=False, optimization_iteration_num=64, use_discriminator_loss=False,
+                 dynamic_model, name, data, scene_dirs, composite=False, topk=1,
+                 output_dim=(200, 1), step_size_denom=2, use_rgbd_integration=False, use_discriminator_loss=False,
                  discriminator_loss_weight=0, recon_on_visible=False, offscreen_rendering=True):
         self.use_discriminator_loss = use_discriminator_loss
         self.offscreen_rendering = offscreen_rendering
         self.discriminator_loss_weight = discriminator_loss_weight
-        self.use_test_time_optimization = use_test_time_optimization
-        self.optimization_iteration_num = optimization_iteration_num
         self.topk = topk
         self.recon_on_visible = recon_on_visible
         self.output_dim = output_dim
@@ -52,7 +49,7 @@ class InfiniteSceneGeneration:
         elif data == 'google_earth':
             image_resolution = (256, 256)
             os.makedirs(grid_transform_path, exist_ok=True)
-            img_fn = sorted(Path('templates/google_earth/seed0').glob("im*"))[index_i]
+            img_fn = sorted(Path('templates/google_earth/seed0').glob("im*"))[0]
             shutil.copy(img_fn,
                         grid_transform_path / img_fn.name.replace('.png', '_00_00.png'))
             shutil.copy(str(img_fn).replace('im', 'dm').replace('.png', '.npy'),
@@ -62,8 +59,8 @@ class InfiniteSceneGeneration:
         self.image_resolution = image_resolution
 
         if scene_dirs is not None:
-            shutil.copy(str(scene_dirs[index_i]) + f'/dm_00000.npy', f'{grid_transform_path}/dm_00000_00_00.npy')
-            shutil.copy(str(scene_dirs[index_i]) + f'/im_00000.png', f'{grid_transform_path}/im_00000_00_00.png')
+            shutil.copy(str(scene_dirs[0]) + f'/dm_00000.npy', f'{grid_transform_path}/dm_00000_00_00.npy')
+            shutil.copy(str(scene_dirs[0]) + f'/im_00000.png', f'{grid_transform_path}/im_00000_00_00.png')
         if data == 'clevr-infinite':
             self.K = np.array([
                 [355.5555, 0, 128],
