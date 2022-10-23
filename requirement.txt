@@ -1,6 +1,6 @@
 omegaconf==2.0.0
 scikit-image==0.19.2
-matplotlib==3.5.1
+matplotlib
 autolab_core==1.1.1
 opencv-python
 albumentations==1.1.0
