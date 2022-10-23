@@ -33,7 +33,7 @@ if __name__ == '__main__':
                         default="clevr-infinite",     # choose from 'google_earth, clevr-infinite'
                         help='an integer for the accumulator')
     parser.add_argument('--use_rgbd_integration',  type=bool,
-                        default=False,
+                        default=True,
                         help='an integer for the accumulator')
     parser.add_argument('--offscreen_rendering',  type=bool,
                         default=True,
