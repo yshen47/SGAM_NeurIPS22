@@ -194,15 +194,20 @@ class VQModel(pl.LightningModule):
         T_src2tgt[:, :3, :3] = R_rels
         T_src2tgt[:, :3, 3] = t_rels
         T_src2tgt = T_src2tgt.view(bs, src_n, *T_src2tgt.shape[1:]).to(self.device)
-        warped_depth, x, extrapolation_mask, mask, cur_fused_features, idx, projected_features = render_projection_from_srcs_fast(x_src,
-                                                        dm_src[:, :, 0],
-                                                        batch["Ks"][:, 0].to(self.device),
-                                                        batch["Ks"].to(self.device),
-                                                        T_src2tgt,
-                                                        src_num=x_src.shape[1],
-                                                        dynamic_masks=None,
-                                                        depth_range=self.depth_range if not no_depth_range else None,
-                                                        parallel=parallel)
+        if 'warped_tgt_features' in batch:
+            x = batch['warped_tgt_features']
+            warped_depth = batch['warped_tgt_depth'][:, None]
+            extrapolation_mask = (warped_depth <= 0)
+        else:
+            warped_depth, x, extrapolation_mask, mask, cur_fused_features, idx, projected_features = render_projection_from_srcs_fast(x_src,
+                                                            dm_src[:, :, 0],
+                                                            batch["Ks"][:, 0].to(self.device),
+                                                            batch["Ks"].to(self.device),
+                                                            T_src2tgt,
+                                                            src_num=x_src.shape[1],
+                                                            dynamic_masks=None,
+                                                            depth_range=self.depth_range if not no_depth_range else None,
+                                                            parallel=parallel)
         if dataset == 'google_earth':
             x_inverse_depth = 1 / (x_depth + 10)
             x_inverse_depth = (x_inverse_depth - 1 / 14.765625) / (1 / 10.099975586 - 1 / 14.765625)

@@ -24,7 +24,7 @@ import torch.nn.functional as F
 class InfiniteSceneGeneration:
 
     def __init__(self,
-                 dynamic_model, model_type, name, data, scene_dirs, index_i, composite=False, topk=1,
+                 dynamic_model, name, data, scene_dirs, index_i, composite=False, topk=1,
                  output_dim=(200, 1), step_size_denom=2, use_rgbd_integration=False,
                  use_test_time_optimization=False, optimization_iteration_num=64, use_discriminator_loss=False,
                  discriminator_loss_weight=0, recon_on_visible=False, offscreen_rendering=True):
@@ -33,7 +33,6 @@ class InfiniteSceneGeneration:
         self.discriminator_loss_weight = discriminator_loss_weight
         self.use_test_time_optimization = use_test_time_optimization
         self.optimization_iteration_num = optimization_iteration_num
-        self.model_type = model_type
         self.topk = topk
         self.recon_on_visible = recon_on_visible
         self.output_dim = output_dim
@@ -585,16 +584,7 @@ class InfiniteSceneGeneration:
                 xs, ys = np.meshgrid(x, y)
                 dm_srcs[i] = (dm_srcs[i] * self.K[0][0] / np.sqrt(
                     self.K[0][0] ** 2 + (self.K[0][2] - ys - 0.5) ** 2 + (self.K[1][2] - xs - 0.5) ** 2))
-        if self.model_type != 'vq_gan':
-            while len(K_invs) < num_src:
-                Ks.append(np.eye(3))
-                K_invs.append(np.eye(3))
-                R_rels.append(np.eye(3))
-                t_rels.append(np.zeros(3))
-                img_srcs.append(np.zeros_like(img_srcs[-1]))
-                dm_srcs.append(np.zeros_like(dm_srcs[-1]))
-            mask = np.zeros(num_src)
-            mask[:len(src_nodes)] = 1
+
         batch = {
             "Ks": np.stack(Ks)[None, ],
             "K_invs": np.stack(K_invs)[None, ],
@@ -609,8 +599,6 @@ class InfiniteSceneGeneration:
             batch["warped_tgt_features"] = warped_features[None,]
             batch["warped_tgt_depth"] = integrated_tgt_depth[None,]
 
-        if self.model_type != 'vq_gan':
-            batch['src_masks'] = mask[None,]
 
         for k in batch:
             batch[k] = torch.from_numpy(batch[k].astype(np.float32)).cuda()
