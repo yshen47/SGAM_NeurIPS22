@@ -1,3 +1,7 @@
+# SGAM: Building a Virtual 3D World through Simultaneous Generation and Mapping
+# Authored by Yuan Shen, Wei-Chiu Ma and Shenlong Wang
+# University of Illinois at Urbana-Champaign and Massachusetts Institute of Technology
+
 import os
 import shutil
 import numpy as np
@@ -8,10 +12,10 @@ import Imath
 import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
-    for folder in os.listdir('dataset/blender_3d'):
+    for folder in os.listdir('dataset/clevr-infinite'):
         if 'scene' in folder:
-            blender_3d_scene_path = Path(f'dataset/blender_3d/{folder}')
-            blender_3d_postprocessed_scene_path = Path(f'dataset/blender_3d_large_postprocessed/{folder}')
+            blender_3d_scene_path = Path(f'dataset/clevr-infinite/{folder}')
+            blender_3d_postprocessed_scene_path = Path(f'dataset/clevr-infinite_large_postprocessed/{folder}')
             os.makedirs(blender_3d_postprocessed_scene_path, exist_ok=True)
             shutil.copy(blender_3d_scene_path / 'transforms.json',
                         blender_3d_postprocessed_scene_path / 'transforms.json')

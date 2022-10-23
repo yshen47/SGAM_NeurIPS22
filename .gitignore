@@ -1,0 +1,5 @@
+.idea
+*.pyc
+trained_models
+logs/
+grid_res/

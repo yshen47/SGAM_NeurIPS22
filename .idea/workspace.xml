@@ -19,11 +19,58 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="50d06446-0238-4ad0-8a57-533510289847" name="Default Changelist" comment="remove break" />
+    <list default="true" id="50d06446-0238-4ad0-8a57-533510289847" name="Default Changelist" comment="remove break">
+      <change afterPath="$PROJECT_DIR$/templates/google_earth/seed1/dm_04439.npy" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/google_earth/seed1/im_04439.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/google_earth/seed2/dm_02220.npy" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/google_earth/seed2/im_02220.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/google_earth/seed3/dm_03231.npy" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/google_earth/seed3/im_03231.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/google_earth/seed4/dm_06467.npy" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/google_earth/seed4/im_06467.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/clevr_generation/convert_exr.py" beforeDir="false" afterPath="$PROJECT_DIR$/clevr_generation/convert_exr.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/configs/codebooks/clevr-infinite.yaml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/configs/codebooks/google_earth_vqgan.yaml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/configs/conditional_generation/clevr-infinite.yaml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/configs/conditional_generation/google_earth_vqgan.yaml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/data/base.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/blender_3d.py" beforeDir="false" afterPath="$PROJECT_DIR$/data/clevr-infinite.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/custom_codebook.py" beforeDir="false" afterPath="$PROJECT_DIR$/data/custom_codebook.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/google_earth.py" beforeDir="false" afterPath="$PROJECT_DIR$/data/google_earth.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main_scene_generation.py" beforeDir="false" afterPath="$PROJECT_DIR$/main_scene_generation.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sgam/generative_sensing_module/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/sgam/generative_sensing_module/model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sgam/generative_sensing_module/modules/losses/vqchamfer_pcd.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/sgam/inference_pipeline.py" beforeDir="false" afterPath="$PROJECT_DIR$/sgam/inference_pipeline.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sgam/point_rendering/warp.py" beforeDir="false" afterPath="$PROJECT_DIR$/sgam/point_rendering/warp.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/google_earth_table2_random_sampled_seeds/Screenshot from 2022-05-11 20-36-20.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/google_earth_table2_random_sampled_seeds/seeds/dm_01012.npy" beforeDir="false" afterPath="$PROJECT_DIR$/templates/google_earth/seed0/dm_01012.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/google_earth_table2_random_sampled_seeds/seeds/im_01012.png" beforeDir="false" afterPath="$PROJECT_DIR$/templates/google_earth/seed0/im_01012.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/template_blender/K_00000.npy" beforeDir="false" afterPath="$PROJECT_DIR$/templates/clevr-infinite/K_00000.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/template_blender/K_00000_00_00.npy" beforeDir="false" afterPath="$PROJECT_DIR$/templates/clevr-infinite/K_00000_00_00.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/template_blender/R_00000.npy" beforeDir="false" afterPath="$PROJECT_DIR$/templates/clevr-infinite/R_00000.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/template_blender/R_00000_00_00.npy" beforeDir="false" afterPath="$PROJECT_DIR$/templates/clevr-infinite/R_00000_00_00.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/template_blender/dm_00000_00_00.npy" beforeDir="false" afterPath="$PROJECT_DIR$/templates/clevr-infinite/dm_00000_00_00.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/template_blender/im_00000.png" beforeDir="false" afterPath="$PROJECT_DIR$/templates/clevr-infinite/im_00000.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/template_blender/im_00000_00_00.png" beforeDir="false" afterPath="$PROJECT_DIR$/templates/clevr-infinite/im_00000_00_00.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/template_blender/t_00000.npy" beforeDir="false" afterPath="$PROJECT_DIR$/templates/clevr-infinite/t_00000.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/template_blender/t_00000_00_00.npy" beforeDir="false" afterPath="$PROJECT_DIR$/templates/clevr-infinite/t_00000_00_00.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/template_blender/transforms.json" beforeDir="false" afterPath="$PROJECT_DIR$/templates/clevr-infinite/transforms.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tools/rgbd_integration.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/train_generative_sensing_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_generative_sensing_model.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -42,21 +89,22 @@
     <property name="WebServerToolWindowPanel.toolwindow.show.date" value="false" />
     <property name="WebServerToolWindowPanel.toolwindow.show.permissions" value="false" />
     <property name="WebServerToolWindowPanel.toolwindow.show.size" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/configs/mae_training" />
-    <property name="settings.editor.selected.configurable" value="configurable.group.appearance" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/templates/google_earth" />
+    <property name="settings.editor.selected.configurable" value="fileTemplates" />
   </component>
   <component name="RecentsManager">
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/trained_models/google_earth" />
-      <recent name="$PROJECT_DIR$/sgam/generative_sensing_module/modules" />
-      <recent name="$PROJECT_DIR$/sgam/generative_sensing_module" />
-    </key>
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/templates/google_earth" />
       <recent name="$PROJECT_DIR$/configs/mae_training" />
       <recent name="$PROJECT_DIR$/configs/codebooks" />
       <recent name="$PROJECT_DIR$/trained_models/kitti360/conditional_generation_kitti360_n_src_1_no_dynamic_extrapolation_mask/configs" />
       <recent name="$PROJECT_DIR$" />
-      <recent name="$PROJECT_DIR$/configs/conditional_generation" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/trained_models/google_earth" />
+      <recent name="$PROJECT_DIR$/sgam/generative_sensing_module/modules" />
+      <recent name="$PROJECT_DIR$/sgam/generative_sensing_module" />
     </key>
   </component>
   <component name="RunManager">
@@ -283,14 +331,18 @@
     </state>
     <state x="304" y="182" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.25.1680.1025@0.25.1680.1025" timestamp="1666235827643" />
     <state x="304" y="175" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.25.1680.979@0.25.1680.979" timestamp="1664752351911" />
+    <state x="527" y="344" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1666493437564">
+      <screen x="0" y="25" width="1680" height="1025" />
+    </state>
+    <state x="527" y="344" key="#com.intellij.fileTypes.FileTypeChooser/0.25.1680.1025@0.25.1680.1025" timestamp="1666493437564" />
     <state x="415" y="243" key="RollbackChangesDialog" timestamp="1666295025975">
       <screen x="0" y="25" width="1680" height="1025" />
     </state>
     <state x="415" y="243" key="RollbackChangesDialog/0.25.1680.1025@0.25.1680.1025" timestamp="1666295025975" />
-    <state x="349" y="173" key="SettingsEditor" timestamp="1666489197590">
+    <state x="349" y="173" key="SettingsEditor" timestamp="1666492339238">
       <screen x="0" y="25" width="1680" height="1025" />
     </state>
-    <state x="349" y="173" key="SettingsEditor/0.25.1680.1025@0.25.1680.1025" timestamp="1666489197590" />
+    <state x="349" y="173" key="SettingsEditor/0.25.1680.1025@0.25.1680.1025" timestamp="1666492339238" />
     <state x="641" y="437" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1664507959294">
       <screen x="0" y="25" width="1680" height="979" />
     </state>

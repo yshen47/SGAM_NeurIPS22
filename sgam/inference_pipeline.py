@@ -1,3 +1,6 @@
+# SGAM: Building a Virtual 3D World through Simultaneous Generation and Mapping
+# Authored by Yuan Shen, Wei-Chiu Ma and Shenlong Wang
+# University of Illinois at Urbana-Champaign and Massachusetts Institute of Technology
 import copy
 import os
 import random
@@ -22,9 +25,9 @@ class InfiniteSceneGeneration:
 
     def __init__(self,
                  dynamic_model, model_type, name, data, scene_dirs, index_i, composite=False, topk=1,
-                 output_dim=(30, 30), step_size_denom=1, use_rgbd_integration=False,
+                 output_dim=(200, 1), step_size_denom=2, use_rgbd_integration=False,
                  use_test_time_optimization=False, optimization_iteration_num=64, use_discriminator_loss=False,
-                 discriminator_loss_weight=0, recon_on_visible=True, offscreen_rendering=True):
+                 discriminator_loss_weight=0, recon_on_visible=False, offscreen_rendering=True):
         self.use_discriminator_loss = use_discriminator_loss
         self.offscreen_rendering = offscreen_rendering
         self.discriminator_loss_weight = discriminator_loss_weight
@@ -44,23 +47,25 @@ class InfiniteSceneGeneration:
         if os.path.exists(grid_transform_path):
             shutil.rmtree(grid_transform_path)
 
-        if data == 'blender':
-            shutil.copytree('templates/template_blender', grid_transform_path)
-        elif data == 'kitti360':
-            shutil.copytree('templates/template_kitti360_debug_sequence3', grid_transform_path)
+        if data == 'clevr-infinite':
+            image_resolution = (256, 256)
+            shutil.copytree('templates/clevr-infinite', grid_transform_path)
         elif data == 'google_earth':
+            image_resolution = (256, 256)
             os.makedirs(grid_transform_path, exist_ok=True)
-            img_fn = sorted(Path('templates/google_earth_table2_random_sampled_seeds/seeds').glob("im*"))[index_i]
+            img_fn = sorted(Path('templates/google_earth/seed0').glob("im*"))[index_i]
             shutil.copy(img_fn,
                         grid_transform_path / img_fn.name.replace('.png', '_00_00.png'))
             shutil.copy(str(img_fn).replace('im', 'dm').replace('.png', '.npy'),
                         grid_transform_path / img_fn.name.replace('im', 'dm').replace('.png', '_00_00.npy'))
         else:
             raise NotImplementedError
+        self.image_resolution = image_resolution
+
         if scene_dirs is not None:
             shutil.copy(str(scene_dirs[index_i]) + f'/dm_00000.npy', f'{grid_transform_path}/dm_00000_00_00.npy')
             shutil.copy(str(scene_dirs[index_i]) + f'/im_00000.png', f'{grid_transform_path}/im_00000_00_00.png')
-        if data == 'blender':
+        if data == 'clevr-infinite':
             self.K = np.array([
                 [355.5555, 0, 128],
                 [0, 355.5555, 128],
@@ -72,32 +77,15 @@ class InfiniteSceneGeneration:
             self.curr = 1
         elif data == 'google_earth':
             trajectory_shape = 'grid'
-            if os.path.exists("/media/yuan/T7_red/GoogleEarthDataset/K.npy"):
-                self.K = np.load("/media/yuan/T7_red/GoogleEarthDataset/K.npy")
-            elif os.path.exists("/shared/rsaas/yshen47/GoogleEarthDataset/K.npy"):
-                self.K = np.load("/shared/rsaas/yshen47/GoogleEarthDataset/K.npy")
-            else:
-                self.K = np.array([
-                    [497.77774, 0, 256],
-                    [0, 497.77774, 256],
-                    [0, 0, 1]
-                ])
-            self.num_src = 5 if isinstance(dynamic_model, VQModel) else 1
-            self.curr = 1
-        elif data == 'kitti360':
-            trajectory_shape = 'trajectory'
-            cam_intr = CameraIntrinsics("0",
-                                        fx=552.554261,
-                                        fy=552.554261,
-                                        cx=682.049453,
-                                        cy=238.769549,
-                                        height=376,
-                                        width=1408)
-            crop_cj = round(1408 / 2)
-            crop_ci = round(376 / 2)
-            self.K = cam_intr.crop(height=256, width=1024, crop_ci=crop_ci, crop_cj=crop_cj).resize(0.25)._K
-            self.num_src = 1 if isinstance(dynamic_model, VQModel) else 1
-            self.curr = 1
+            self.K = np.array([
+                [497.77774, 0, 256],
+                [0, 497.77774, 256],
+                [0, 0, 1]
+            ])
+            self.K[0] = self.K[0] * self.image_resolution[1] / 512
+            self.K[1] = self.K[1] * self.image_resolution[0] / 512
+            self.num_src = 3 if isinstance(dynamic_model, VQModel) else 1
+            self.curr = 3
         else:
             raise NotImplementedError
 
@@ -123,12 +111,10 @@ class InfiniteSceneGeneration:
             self._ordered_grid_coords = self.prepare_trajectory(output_dim[0], known_map, grid_transform_path, pose_path=f"{grid_transform_path}/cam0_to_world.txt")
         else:
             raise NotImplementedError
-        # # reverse order of transform grid
-        # self.transform_grid = self.transform_grid[::-1]
         self.dynamic_model.use_rgbd_integration = self.use_rgbd_integration
 
         if self.use_rgbd_integration:
-            if data == 'blender':
+            if data == 'clevr-infinite':
                 vox_length = 0.05
                 self.volume = o3d.pipelines.integration.ScalableTSDFVolume(
                     voxel_length=vox_length,
@@ -138,17 +124,17 @@ class InfiniteSceneGeneration:
                 vox_length = 0.01
                 self.volume = o3d.pipelines.integration.ScalableTSDFVolume(
                     voxel_length=vox_length,
-                    sdf_trunc=1,
+                    sdf_trunc=0.03,
                     color_type=o3d.pipelines.integration.TSDFVolumeColorType.RGB8)
             else:
                 raise NotImplementedError
 
             if not self.offscreen_rendering:
                 self.vis = o3d.visualization.Visualizer()
-                if data == 'blender':
+                if data == 'clevr-infinite':
                     self.vis.create_window(width=256, height=64, visible=True)
                 elif data in ['google_earth', 'kitti360']:
-                    self.vis.create_window(width=512, height=512, visible=True)
+                    self.vis.create_window(width=256, height=256, visible=True)
                 else:
                     raise NotImplementedError
 
@@ -216,7 +202,7 @@ class InfiniteSceneGeneration:
                 self.transform_grid.append([])
 
     def prepare_spiral(self, grid_size, known_map, output_folder):
-        self.transform_grid = [[]]
+        self.transform_grid = []
         self.anchor_poses = {}
         frames = []
         if self.data == 'google_earth':
@@ -296,7 +282,7 @@ class InfiniteSceneGeneration:
             }
             if (i, 0) in known_map:
                 self.anchor_poses[(i, 0)] = curr_transform
-            self.transform_grid[-1].append(curr_transform)
+            self.transform_grid.append([curr_transform])
         o3d.visualization.draw_geometries(frames)
 
     def prepare_ring(self, grid_size, known_map, output_folder, horizontal_offset=0):
@@ -459,245 +445,6 @@ class InfiniteSceneGeneration:
                 self.curr += 1
         print(f"Successfully unrolling, results saved at {self.grid_transform_path}")
 
-    def init_latent_features(self):
-        variables = []  # latent features to optimize in batch
-        num_init_poses = len(list(self.grid_transform_path.glob("im_*_*_*.png")))
-        for i in range(num_init_poses):
-            batch = self.prepare_batch_data(self.transform_grid[i][0], [self.transform_grid[i][0]], 1)
-
-            batch['src_depths'] = batch['src_depths'][..., None]
-            x, x_dst, extrapolation_mask, warped_depth = self.dynamic_model.get_x(batch, self.data, return_extrapolation_mask=True, parallel=True)
-            if self.data == 'blender':
-                x_sample_dets = self.dynamic_model(x_dst, self.topk, extrapolation_mask=extrapolation_mask,
-                                                   sample_number=1)
-            elif self.data in ['kitti360', 'google_earth']:
-                x_sample_dets, _, pre_quantized_features, quantized_features = self.dynamic_model(x,
-                                                                                                  extrapolation_mask=extrapolation_mask,
-                                                                                                  topk=self.topk,
-                                                                                                  sample_number=1,
-                                                                                                  get_pre_quantized_feature=True,
-                                                                                                  get_quantized_feature=True)
-
-                rgb = np.clip(((x_sample_dets[0][0][0][:3] + 1) / 2 * 255.).permute(1, 2, 0).detach().cpu().numpy(), 0,
-                              255)
-
-                rgb = rgb.astype(np.uint8)
-
-                plt.imshow(rgb)
-                plt.show()
-            else:
-                raise NotImplementedError
-            variables.append({
-                "grid_coord": (i, 0),
-                "rgbd": x_sample_dets[0].squeeze().detach(),
-                "fixed": True,
-                "feature": quantized_features.squeeze().detach(),
-                "pre_quantized_features": pre_quantized_features.squeeze().detach(),
-                "x": x.detach(),
-                "batch_src_imgs": batch['src_imgs'],
-                "batch_src_depths": batch['src_depths'],
-                "batch_R_rels": batch['R_rels'],
-                "batch_t_rels": batch['t_rels'],
-                "warped_depth": warped_depth,
-            })
-
-        # initialization pass
-        for i in tqdm(range(self.num_src, self.output_dim[0] * self.output_dim[1])):
-            with torch.no_grad():
-                tgt_pose_grid_coord = self.next_pose(i)
-                res = self.one_step_prediction(tgt_pose_grid_coord,
-                                               use_test_time_optimization=False)
-                res["grid_coord"] = (i, 0)
-                variables.append(res)
-
-                rgb = np.clip(((res['rgbd'][:3] + 1) / 2 * 255.).permute(1, 2, 0).detach().cpu().numpy(), 0,
-                              255).astype(np.uint8)
-
-                src_depth = (1 / ((res['rgbd'][3] + 1) / 2 * (1 / 3 - 1 / 75) + 1 / 75))
-                np.save(str(self.grid_transform_path / f"dm_init_{i:05d}.npy"), src_depth.detach().cpu().numpy())
-                Image.fromarray(rgb).save(str(self.grid_transform_path / f"im_init_{i:05d}.png"), format='png')
-        return variables
-
-    def batch_optimization(self, batch_length=8, sample_size=500):
-        variables = self.init_latent_features()
-        assert self.data == 'kitti360'
-        # variables2 = self.init_latent_features()
-        # assert torch.equal(variables[2]['batch_src_imgs'], variables2[2]['batch_src_imgs'])
-        # assert torch.equal(variables[2]['batch_src_depths'], variables2[2]['batch_src_depths'])
-        # assert torch.equal(variables[2]['batch_R_rels'], variables2[2]['batch_R_rels'])
-        # assert torch.equal(variables[2]['batch_t_rels'], variables2[2]['batch_t_rels'])
-        # assert torch.equal(variables[2]['warped_depth'], variables2[2]['warped_depth'])
-        #
-        # assert torch.equal(variables[2]['x'], variables2[2]['x'])
-        # variables_copy = copy.deepcopy(variables)
-        # sample batch subsequence
-        torch.set_grad_enabled(True)
-        # self.dynamic_model.train()
-        for _ in tqdm(range(sample_size)):
-            start_index = random.randint(0, len(variables) - batch_length)
-            # start_index = 0 #TODO: remove this, debugging currently
-            curr_optimization_features = []
-            curr_optimization_feature_indices = []
-            for curr_index in range(start_index, start_index + batch_length):
-                if not variables[curr_index]['fixed']:
-                    variables[curr_index]['feature'].requires_grad = True
-                    curr_optimization_features.append(variables[curr_index]['feature'])
-                    curr_optimization_feature_indices.append(curr_index)
-                else:
-                    variables[curr_index]['feature'].requires_grad = False
-
-            features_opt = torch.optim.Adam(curr_optimization_features,
-                                            lr=1e-3, betas=(0.5, 0.9))
-            # orig_curr_optimization_features = torch.stack(curr_optimization_features).detach().clone()
-            # setup MRF
-            total_loss = 0
-            for curr_target_index in range(start_index, start_index+batch_length):
-
-                curr_target_grid_coord = variables[curr_target_index]['grid_coord']
-                tgt_meta = self.transform_grid[curr_target_grid_coord[0]][curr_target_grid_coord[1]]
-                tgt_meta['feature'] = variables[curr_target_index]['feature']
-                tgt_meta['fixed'] = variables[curr_target_index]['fixed']
-
-                src_metas = []
-                for curr_source_index in range(start_index, start_index+batch_length):
-                    if curr_source_index != curr_target_index:
-                        curr_src_grid_coord = variables[curr_source_index]['grid_coord']
-                        curr_src_meta = self.transform_grid[curr_src_grid_coord[0]][curr_src_grid_coord[1]]
-                        curr_src_meta['feature'] = variables[curr_source_index]['feature']
-                        curr_src_meta['fixed'] = variables[curr_source_index]['fixed']
-                        src_metas.append(curr_src_meta)
-                src_metas = random.sample(src_metas, self.num_src)
-
-                batch = self.prepare_batch_from_feature_data(tgt_meta, src_metas, self.num_src)
-
-                # decode source rgb-ds from features
-                src_depths = []
-                src_images = []
-                for src_feature in batch['src_features']:
-                    quant, emb_loss, info = self.dynamic_model.quantize(src_feature)
-                    src_rgbd = self.dynamic_model.decode(quant)
-                    src_rgb = src_rgbd[:, :3]
-                    src_depth = (1 / ((src_rgbd[:, 3] + 1) / 2 * (1 / 3 - 1 / 75) + 1 / 75))
-                    src_depths.append(src_depth[..., None])
-                    src_images.append(src_rgb)
-
-                # for i, x_sample_det in enumerate(reversed(src_images)):
-                #     # fake_logits = -self.dynamic_model.loss.discriminator(x_sample_det.contiguous())
-                #     # plt.imshow(fake_logits[0][0].detach().cpu().numpy(), cmap='gray')
-                #     # plt.show()
-                #
-                #     rgb = np.clip(((x_sample_det[0][:3] + 1) / 2 * 255.).permute(1, 2, 0).detach().cpu().numpy(), 0,
-                #                   255)
-                #
-                #     rgb = rgb.astype(np.uint8)
-                #
-                #     plt.imshow(rgb)
-                #     plt.title(f'src_rgb_{i}')
-                #     plt.show()
-                #
-                #     plt.imshow(src_depths[i].squeeze().detach().cpu().numpy())
-                #     plt.title(f'src_depth_{i}')
-                #     plt.show()
-
-                quant = self.dynamic_model.quantize(batch['dst_feature'])[0]
-                tgt_rgbd = self.dynamic_model.decode(quant)
-                batch['dst_img'] = torch.clip(tgt_rgbd[:, :3].permute(0, 2, 3, 1), -1, 1)
-                batch['dst_depth'] = (1 / ((tgt_rgbd[:, 3] + 1) / 2 * (1 / 3 - 1 / 75) + 1 / 75))
-                batch['src_depths'] = torch.stack(src_depths).permute(1, 0, 2, 3, 4)
-                batch['src_imgs'] = torch.clip(torch.stack(src_images).permute(1, 0, 3, 4, 2), -1, 1)
-
-                # one-step prediction
-                x, x_dst, extrapolation_mask, warped_depth = self.dynamic_model.get_x(batch, return_extrapolation_mask=True,
-                                                                        no_depth_range=True, parallel=True)
-                x_pred = self.dynamic_model(x,
-                                              extrapolation_mask,
-                                              get_pre_quantized_feature=False,
-                                              get_quantized_feature=False)[0]
-
-
-                if curr_target_index == start_index + batch_length // 2:
-                    # rgb = np.clip(((x[0][:3] + 1) / 2 * 255.).permute(1, 2, 0).detach().cpu().numpy(), 0,
-                    #               255)
-                    #
-                    # rgb = rgb.astype(np.uint8)
-                    # plt.imshow(rgb)
-                    # plt.title(f'warped_rgb')
-                    # plt.show()
-                    # rgb = np.clip(((x_pred[0][:3] + 1) / 2 * 255.).permute(1, 2, 0).detach().cpu().numpy(), 0,
-                    #               255)
-                    #
-                    # rgb = rgb.astype(np.uint8)
-                    #
-                    # plt.imshow(rgb)
-                    # plt.title(f'pred_rgb')
-                    # plt.show()
-                    variables[curr_target_index]['rgbd'] = x_pred.detach().cpu()[0]
-                aeloss, log_dict_ae = self.dynamic_model.loss(emb_loss, x, x_pred, 0,
-                                                              self.dynamic_model.global_step,
-                                                              last_layer=self.dynamic_model.get_last_layer(),
-                                                              split="test_optimization",
-                                                              extrapolation_mask=extrapolation_mask,
-                                                              recon_on_visible=self.recon_on_visible,
-                                                              is_inference=True)
-                variables[curr_target_index]['test_optimization/g_loss'] = log_dict_ae['test_optimization/g_loss'].detach()
-
-                # x_rec_features = \
-                #     self.dynamic_model.encode(x_pred, encoding_indices=None,
-                #                               extrapolation_mask=extrapolation_mask)[-1]
-                # feature_loss = F.l1_loss(x_rec_features, pre_quantized_features)
-                total_loss = total_loss + aeloss    # + feature_loss
-                if self.use_discriminator_loss:
-                    total_loss = total_loss + log_dict_ae['test_optimization/g_loss'] * self.discriminator_loss_weight
-
-            # optimize
-            features_opt.zero_grad()
-            total_loss.backward()
-            features_opt.step()
-            print("total loss: ", total_loss.item())
-            # print("aeloss: ", aeloss.item())
-            # print("gloss: ", log_dict_ae['test_optimization/g_loss'].item())
-            # sanity check on gradient descent
-
-        torch.set_grad_enabled(False)
-        # self.dynamic_model.eval()
-
-        # dump decoded optimized image
-        sum_of_g_loss = 0
-        for i in tqdm(range(self.num_src, self.output_dim[0] * self.output_dim[1])):
-            rgbd = variables[i]['rgbd']
-            rgb = np.clip(((rgbd[:3] + 1) / 2 * 255.).permute(1, 2, 0).detach().cpu().numpy(), 0,
-                          255).astype(np.uint8)
-
-            src_depth = (1 / ((rgbd[3] + 1) / 2 * (1 / 3 - 1 / 75) + 1 / 75))
-            np.save(str(self.grid_transform_path / f"dm_optimized_{i:05d}.npy"), src_depth.detach().cpu().numpy())
-            Image.fromarray(rgb).save(str(self.grid_transform_path / f"im_optimized_{i:05d}.png"), format='png')
-            sum_of_g_loss += variables[i]['test_optimization/g_loss']
-        print("g_loss avg: ", sum_of_g_loss/(self.output_dim[0] * self.output_dim[1]-self.num_src))
-    def expand_in_bfs(self):
-        visited = np.zeros(self.output_dim)
-        target_grid_coord = np.array([0, 0])
-        frontier = {}
-        while visited.sum() != 900:
-            for opt in np.array([[0, 1], [0, -1], [1, 0], [-1, 0]]):
-                curr_coord = target_grid_coord + opt
-                if 0 <= curr_coord[0] < self.output_dim[0] - 1 and 0 <= curr_coord[1] < self.output_dim[1] - 1 and not visited[curr_coord[0]][curr_coord[1]]:
-                    consistency_mse, rgb, depth = self.one_step_prediction(curr_coord, save_res_to_disk=False)
-                    frontier[(curr_coord[0], curr_coord[1])] = (consistency_mse, rgb, depth)
-            min_consistency = 999999
-            visited[target_grid_coord[0]][target_grid_coord[1]] = 1
-
-            for k, v in frontier.items():
-                if v[0] < min_consistency:
-                    min_consistency = v[0]
-                    target_grid_coord = k
-            _, rgb, depth = frontier[(target_grid_coord[0], target_grid_coord[1])]
-            self.save_to_disk(target_grid_coord, rgb, depth)
-            self.curr += 1
-            del frontier[target_grid_coord]
-            # plt.imshow(visited)
-            # plt.show()
-            print()
-
     def zig_zag_order(self):
         rows = self.output_dim[0]
         columns = self.output_dim[1]
@@ -762,7 +509,7 @@ class InfiniteSceneGeneration:
             for i in range(self.curr):
                 candidate_coord = self._ordered_grid_coords[i]
                 candidate_pose = self.transform_grid[candidate_coord[0]][candidate_coord[1]]
-                if candidate_pose['visited'] and np.linalg.norm(candidate_pose['position']-tgt_pose['position']) <= (0.3 if self.data != 'blender' else 1):
+                if candidate_pose['visited'] and np.linalg.norm(candidate_pose['position']-tgt_pose['position']) <= (0.3 if self.data != 'clevr-infinite' else 1):
                     src_grid_coords.append((candidate_coord, candidate_pose['consistency_score'], np.linalg.norm(candidate_pose['position']-tgt_pose['position'])))
             src_grid_coords = sorted(src_grid_coords, key=lambda x: x[2])
             src_grid_coords = src_grid_coords[:self.num_src]
@@ -781,11 +528,10 @@ class InfiniteSceneGeneration:
         return src_grid_coords, None
 
     def prepare_batch_data(self, tgt_node, src_nodes, num_src):
-
-        img_srcs = [np.array(Image.open(src_node['rgb_path'])) / 127.5 - 1.0 for src_node in src_nodes]
+        img_srcs = [np.array(Image.open(src_node['rgb_path']).resize((self.image_resolution[1], self.image_resolution[0]), resample=Image.LANCZOS)) / 127.5 - 1.0 for src_node in src_nodes]
         img_dst = np.zeros_like(img_srcs[0])    # placeholder
-
-        dm_srcs = [np.load(src_node['depth_path']).squeeze() for src_node in src_nodes]
+        dm_srcs = [F.interpolate(torch.from_numpy(np.load(src_node['depth_path'])[None, None,]), size=self.image_resolution)[0][
+            0].numpy().squeeze() for src_node in src_nodes]
         dm_dst = np.zeros_like(dm_srcs[0])      # placeholder
         print([src_node['depth_path'] for src_node in src_nodes], [src_node['rgb_path'] for src_node in src_nodes])
 
@@ -832,7 +578,7 @@ class InfiniteSceneGeneration:
 
         for i, dm_src in enumerate(dm_srcs):
             curr_index = int(src_nodes[i]['rgb_path'].split('/')[-1][3:-4])
-            if curr_index == 0 and self.data == 'blender':
+            if curr_index == 0 and self.data == 'clevr-infinite':
                 h, w = dm_src.shape[:2]
                 x = np.linspace(0, w - 1, w)
                 y = np.linspace(0, h - 1, h)
@@ -866,65 +612,8 @@ class InfiniteSceneGeneration:
         if self.model_type != 'vq_gan':
             batch['src_masks'] = mask[None,]
 
-        # batch['dst_depth'] = 2 * (batch['dst_depth'] - 1 / 16) / (1 / 7 - 1 / 16) - 1
-        # batch['src_depths'] = 2 * (batch['src_depths'] - 1 / 16) / (1 / 7 - 1 / 16) - 1
-
         for k in batch:
             batch[k] = torch.from_numpy(batch[k].astype(np.float32)).cuda()
-        return batch
-
-    def prepare_batch_from_feature_data(self, tgt_node, src_nodes, num_src):
-        R_dst = tgt_node["R"]
-        t_dst = tgt_node["t"]
-
-        R_rels = []
-        t_rels = []
-        Ks = []
-        K_invs = []
-        T_tgt = np.eye(4)
-        T_tgt[:3, :3] = R_dst
-        T_tgt[:3, 3] = t_dst
-
-        K = self.K
-        Rs = [src_node["R"] for src_node in src_nodes]
-        ts = [src_node["t"] for src_node in src_nodes]
-        T_tgt2srcs = []
-        for src_node in src_nodes:
-            R_src = src_node["R"]
-            t_src = src_node["t"]
-            T_src = np.eye(4)
-            T_src[:3, :3] = R_src
-            T_src[:3, 3] = t_src
-            T_rel = T_tgt @ np.linalg.inv(T_src)
-            T_tgt2srcs.append(np.linalg.inv(T_rel))
-            R_rel = T_rel[:3, :3]
-            t_rel = T_rel[:3, 3]
-            R_rels.append(R_rel)
-            t_rels.append(t_rel)
-            Ks.append(K)
-            K_invs.append(np.linalg.inv(K))
-
-        if self.model_type != 'vq_gan':
-            while len(K_invs) < num_src:
-                Ks.append(np.eye(3))
-                K_invs.append(np.eye(3))
-                R_rels.append(np.eye(3))
-                t_rels.append(np.zeros(3))
-            mask = np.zeros(num_src)
-            mask[:len(src_nodes)] = 1
-        batch = {
-            "Ks": np.stack(Ks)[None, ],
-            "K_invs": np.stack(K_invs)[None, ],
-            "R_rels": np.stack(R_rels)[None, ],
-            "t_rels": np.stack(t_rels)[None, ],
-            "dst_feature": tgt_node['feature'][None, ].detach() if tgt_node['fixed'] else tgt_node['feature'][None, ],
-            "src_features": [src_node['feature'][None, ].detach() if src_node['fixed'] else src_node['feature'][None, ]
-                             for src_node in src_nodes]
-        }
-
-        for k in batch:
-            if k not in ['dst_feature', 'src_features']:
-                batch[k] = torch.from_numpy(batch[k].astype(np.float32)).cuda()
         return batch
 
     def set_id_grid(depth):
@@ -1066,7 +755,7 @@ class InfiniteSceneGeneration:
         assert len(src_Rs) == len(src_ts) == len(src_dms) == len(src_ims) == len(src_Ks)
 
 
-        # this is the volume, choose vox_length = 0.05 for blender
+        # this is the volume, choose vox_length = 0.05 for clevr-infinite
 
         # viz_folder = os.path.join(output_folder, method, scene_name)
         # if not os.path.exists(viz_folder):
@@ -1076,7 +765,7 @@ class InfiniteSceneGeneration:
         for i in tqdm(range(len(src_Ks))):
             # read data
             depth = src_dms[i].astype(np.float32)
-            rgb = cv2.imread(src_ims[i])
+            rgb = cv2.resize(cv2.imread(src_ims[i]), self.image_resolution)
             cv2.imwrite(src_ims[i], rgb)
             rgb = o3d.io.read_image(src_ims[i])
 
@@ -1108,12 +797,10 @@ class InfiniteSceneGeneration:
         fx, fy, cx, cy = tgt_K[0][0], tgt_K[1][1], tgt_K[0][2], tgt_K[1][2]
 
         if self.offscreen_rendering:
-            if self.data == 'blender':
+            if self.data == 'clevr-infinite':
                 vis = o3d.visualization.rendering.OffscreenRenderer(256, 64, headless=True)
             elif self.data == 'google_earth':
-                vis = o3d.visualization.rendering.OffscreenRenderer(512, 512, headless=True)
-            elif self.data == 'kitti360':
-                vis = o3d.visualization.rendering.OffscreenRenderer(128, 64, headless=True)
+                vis = o3d.visualization.rendering.OffscreenRenderer(256, 256, headless=True)
             else:
                 raise NotImplementedError
         else:
@@ -1180,77 +867,6 @@ class InfiniteSceneGeneration:
                     self.K[0][0] ** 2 + (self.K[0][2] - ys - 0.5) ** 2 + (self.K[1][2] - xs - 0.5) ** 2) / self.K[0][0]
         return dm_dst
 
-    def convert_batch_data_for_infinite_nature(self, batch_data):
-        batch_data["src_img"] = batch_data["src_imgs"]
-        batch_data["src_dm"] = batch_data["src_depths"]
-        batch_data['dst_dm'] = batch_data['dst_depth']
-        batch_data['T_src2tgt'] = torch.eye(4)[None, None].to(batch_data["src_imgs"].device)
-        batch_data["T_src2tgt"][:, :, :3, :3] = batch_data["R_rels"]
-        batch_data["T_src2tgt"][:, :, :3, 3] = batch_data["t_rels"]
-        return batch_data
-
-
-    def one_step_prediction_infinite_nature(self, tgt_pose_grid_coord, save_res_to_disk=True,
-                            use_test_time_optimization=False):  # return type can be either rgbd or feature
-        src_pose_grid_coords, _ = self.get_src_grid_coords(tgt_pose_grid_coord)
-        print(f"im_{self.curr:05d}.png", 'tgt_pose_grid_coord: ', tgt_pose_grid_coord, 'src_pose_grid_coords: ',
-              src_pose_grid_coords)
-
-        tgt_meta = self.transform_grid[tgt_pose_grid_coord[0]][tgt_pose_grid_coord[1]]
-        src_metas = [self.transform_grid[src_pose_grid_coord[0]][src_pose_grid_coord[1]] for src_pose_grid_coord in
-                     src_pose_grid_coords]
-        batch = self.prepare_batch_data(tgt_meta, src_metas, self.num_src)
-        batch = self.convert_batch_data_for_infinite_nature(batch)
-
-        batch['src_img'] = batch['src_img'][:, 0]
-        batch['src_dm'] = batch['src_dm'][:, 0][..., None]
-        batch['T_src2tgt'] = batch['T_src2tgt'][:, 0]
-        batch['Ks'] = batch['Ks'][:, 0]
-        if self.data == 'blender':
-            src_disparity_scaled = (1 / batch['src_dm'] - 1 / 16) / (1 / 7 - 1 / 16)
-        elif self.data == 'google_earth':
-            src_disparity_scaled = (1 / (batch['src_dm'] + 10) - 1 / 14.765625) / (1 / 10.099975586 - 1 / 14.765625)
-        else:
-            raise NotImplementedError
-        x_src = torch.cat([(batch['src_img'] + 1)/2,
-                           src_disparity_scaled], dim=-1).permute(0, 3, 1, 2)
-
-        z, mu, logvar = self.dynamic_model.generator.style_encoding(x_src, return_mulogvar=True)
-        rendered_rgbd, extrapolation_mask = self.dynamic_model.render_with_projection(x_src[:, :3][:, None],
-                                                          batch['src_dm'].permute(0, 3, 1, 2),
-                                                          batch["Ks"],
-                                                          batch["Ks"],
-                                                          batch['T_src2tgt'])
-        print(batch['T_src2tgt'][0])
-        predicted_rgbd = self.dynamic_model(rendered_rgbd, extrapolation_mask, z)
-
-        rgb = np.clip((predicted_rgbd[0][:3] * 255.).permute(1, 2, 0).detach().cpu().numpy(), 0,
-                      255)
-
-        rgb = rgb.astype(np.uint8)
-
-        plt.imshow(rgb)
-        plt.show()
-
-        if self.data == 'blender':
-            depth = (1 / (predicted_rgbd[0][3] * (1 / 7 - 1 / 16) + 1 / 16)).detach().cpu().numpy()
-        elif self.data == 'google_earth':
-            depth = (1 / (predicted_rgbd.squeeze()[3]* (
-                        1 / 10.099975586 - 1 / 14.765625) + 1 / 14.765625) - 10).detach().cpu().numpy()
-        else:
-            raise NotImplementedError
-
-        if save_res_to_disk:
-            self.save_to_disk(tgt_pose_grid_coord, rgb, depth)
-        return {
-            "rgbd": predicted_rgbd.squeeze().detach(),
-            "fixed": False,
-            "batch_src_imgs": batch['src_imgs'],
-            "batch_src_depths": batch['src_depths'],
-            "batch_R_rels": batch['R_rels'],
-            "batch_t_rels": batch['t_rels']
-        }
-
     def one_step_prediction(self, tgt_pose_grid_coord, save_res_to_disk=True, use_test_time_optimization=False): # return type can be either rgbd or feature
         # tgt_pose_grid_coord = self.next_pose()
         src_pose_grid_coords, _ = self.get_src_grid_coords(tgt_pose_grid_coord)
@@ -1267,14 +883,7 @@ class InfiniteSceneGeneration:
                                                                               return_extrapolation_mask=True,
                                                                               no_depth_range=True,
                                                                               parallel=True)
-
-        # x2, x_dst2, extrapolation_mask2, warped_depth2 = self.dynamic_model.get_x(orig_batch, return_extrapolation_mask=True)
-        # assert torch.equal(x, x2)
-        # assert torch.equal(x_dst, x_dst2)
-        # assert torch.equal(extrapolation_mask, extrapolation_mask2)
-        # assert torch.equal(warped_depth, warped_depth2)
-
-        if self.data == 'blender':
+        if self.data == 'clevr-infinite':
             x_sample_dets, _, pre_quantized_features, quantized_features = self.dynamic_model(x, topk=self.topk,
                                                                                               extrapolation_mask=extrapolation_mask,
                                                                                               get_pre_quantized_feature=True,
@@ -1341,7 +950,7 @@ class InfiniteSceneGeneration:
             plt.imshow(rgb)
             plt.show()
 
-        if self.data == 'blender':
+        if self.data == 'clevr-infinite':
             depth = (1 / ((x_sample_det[0][3] + 1) / 2 * (1 / 7 - 1 / 16) + 1 / 16)).detach().cpu().numpy()
         elif self.data == 'kitti360':
             depth = (1 / ((x_sample_det[0][3] + 1) / 2 * (1 / 3 - 1 / 75) + 1 / 75)).detach().cpu().numpy()
@@ -1452,102 +1061,6 @@ class InfiniteSceneGeneration:
         current_pixel_coords = pixel_coords[..., :h, :w].expand(b, 3, h, w).reshape(b, 3, -1)  # [B, 3, H*W]
         cam_coords = (intrinsics_inv @ current_pixel_coords).reshape(b, 3, h, w)
         return cam_coords * depth.unsqueeze(1)
-
-    # def render_tgt_depth_map_from_srcs(self, src_imgs, src_depths, tgt_intrinsic, src_intrinsics, tgt2src_transforms):
-    #     cur_fused_pc = None
-    #     # prepare fused point cloud based on the depth map of the source images
-    #     src2tgt_transform = tgt2src_transforms.inverse()
-    #     for nbs_i in range(src_depths.shape[1]):
-    #         curr_pc = self.pixel2cam(src_depths[:, nbs_i], src_intrinsics[:, nbs_i].inverse())
-    #         cam_coords_flat = curr_pc.reshape(src_depths.shape[0], 3, -1)
-    #         curr_pc = src2tgt_transform[:, nbs_i, :3, :3] @ cam_coords_flat + src2tgt_transform[:, nbs_i, :3, 3:]
-    #
-    #         if cur_fused_pc is None:
-    #             cur_fused_pc = curr_pc
-    #         else:
-    #             cur_fused_pc = torch.cat([cur_fused_pc, curr_pc], dim=2)
-    #
-    #     cur_fused_pc = cur_fused_pc.permute(0, 2, 1)
-    #     rendered_tgt_depths = []
-    #     for batch_i in range(src_depths.shape[0]):
-    #         fused_pc = Pointclouds(points=[cur_fused_pc[batch_i]], features=[torch.zeros_like(cur_fused_pc[batch_i])])
-    #         dmap_all_layers = self.render_projection_from_point_cloud(fused_pc, tgt_intrinsic[batch_i], np.eye(4),
-    #                                                              src_imgs.shape[-2], src_imgs.shape[-1],
-    #                                                              cur_fused_pc.device, splat_radius=0.006).zbuf
-    #         dmap_front = dmap_all_layers[..., 0]
-    #         rendered_tgt_depths.append(dmap_front)
-    #     rendered_tgt_depths = torch.stack(rendered_tgt_depths)
-    #     return rendered_tgt_depths
-
-    # def render_projection_from_srcs(self, src_features, src_depths, tgt_intrinsic, src_intrinsics, src2tgt_transform):
-    #     cur_fused_pc = None
-    #     cur_fused_features = None
-    #     # prepare fused point cloud based on the depth map of the source images
-    #     for nbs_i in range(src_depths.shape[1]):
-    #         curr_pc = self.pixel2cam(src_depths[:, nbs_i], src_intrinsics[:, nbs_i].inverse())
-    #         cam_coords_flat = curr_pc.reshape(src_depths.shape[0], 3, -1)
-    #         curr_pc = torch.bmm(src2tgt_transform[:, nbs_i, :3, :3], cam_coords_flat) + src2tgt_transform[:, nbs_i, :3,
-    #                                                                                     3:]
-    #
-    #         curr_feature = src_features[:, nbs_i].reshape(src_features.shape[0], src_features.shape[2], -1)
-    #         if cur_fused_pc is None:
-    #             cur_fused_pc = curr_pc
-    #             cur_fused_features = curr_feature
-    #         else:
-    #             cur_fused_pc = torch.cat([cur_fused_pc, curr_pc], dim=2)
-    #             cur_fused_features = torch.cat([cur_fused_features, curr_feature], dim=2)
-    #
-    #     cur_fused_pc = cur_fused_pc.permute(0, 2, 1)
-    #     cur_fused_features = cur_fused_features.permute(0, 2, 1)
-    #     rendered_tgt_depths = []
-    #     projected_features = []
-    #     for batch_i in range(src_depths.shape[0]):
-    #         fused_pc = Pointclouds(points=[cur_fused_pc[batch_i]], features=[cur_fused_features[batch_i]])
-    #         projected_feature, dmap_front = self.render_projection_from_point_cloud(fused_pc, tgt_intrinsic[batch_i],
-    #                                                                            np.eye(4), src_features.shape[-2],
-    #                                                                            src_features.shape[-1],
-    #                                                                            cur_fused_pc.device, splat_radius=0.006)
-    #         projected_features.append((projected_feature[0]))
-    #         rendered_tgt_depths.append(dmap_front[0])
-    #     rendered_tgt_depths = torch.stack(rendered_tgt_depths).unsqueeze(-1)
-    #     projected_features = torch.stack(projected_features)
-    #     rendered_tgt_depths = rendered_tgt_depths.permute(0, 3, 1, 2)
-    #     projected_features = projected_features.permute(0, 3, 1, 2)
-    #     return rendered_tgt_depths, projected_features
-
-    # def render_projection_from_point_cloud(self, mesh, intrinsics, extrinsics, h, w, device, splat_radius):
-    #     # Credit Shengze Wang in his DFVS repo
-    #     # read mesh and render a depth map
-    #     R_cv = torch.tensor(extrinsics[:3, :3]).unsqueeze(0).float().to(device)
-    #     T_cv = torch.tensor(extrinsics[:3, 3]).unsqueeze(0).float().to(device)
-    #     # NOTE: fx * aspect ratio, needed likely because of Pytorch3d normalized device coordinate
-    #     cam_mat = intrinsics.float().unsqueeze(0)
-    #
-    #     # NOTE: not needed for newer pytorch3d (e.g. 0.6.1)
-    #     # aspect_ratio = w/h
-    #     # cam_mat[0,0,0] = aspect_ratio * cam_mat[0,1,1]
-    #
-    #     image_size = torch.tensor([[h, w]]).float()
-    #     camera = cameras_from_opencv_projection(R_cv, T_cv, cam_mat, image_size)
-    #
-    #     raster_settings = PointsRasterizationSettings(
-    #         image_size=(h, w),
-    #         radius=0.01,
-    #         points_per_pixel=10,
-    #         bin_size=0
-    #
-    #     )
-    #
-    #     # Create a points renderer by compositing points using an alpha compositor (nearer points
-    #     # are weighted more heavily). See [1] for an explanation.
-    #     rasterizer = PointsRasterizer(cameras=camera, raster_settings=raster_settings).to(device)
-    #     dmap = rasterizer(mesh, eps=1e-7).zbuf[..., 0]
-    #     renderer = PointsRenderer(
-    #         rasterizer=rasterizer,
-    #         compositor=AlphaCompositor().to(device)
-    #     )
-    #     projected_features = renderer(mesh, eps=1e-7)
-    #     return projected_features, dmap
 
     def prepare_pcd(self, depth, color, K, Rt):
         x = np.linspace(0, 256 - 1, 256)

@@ -1,13 +1,12 @@
+# SGAM: Building a Virtual 3D World through Simultaneous Generation and Mapping
+# Authored by Yuan Shen, Wei-Chiu Ma and Shenlong Wang
+# University of Illinois at Urbana-Champaign and Massachusetts Institute of Technology
+
 from __future__ import division
 import torch
 import torch.nn.functional as F
 import numpy as np
 pixel_coords = None
-# from pytorch3d.structures import Pointclouds
-# from pytorch3d.utils import cameras_from_opencv_projection
-# from pytorch3d.renderer import (
-#     PointsRasterizer, PointsRasterizationSettings, PointsRenderer, AlphaCompositor
-# )
 from typing import *
 
 def set_id_grid(depth):
@@ -190,104 +189,6 @@ def inverse_warp(src_img, tgt_depth, src_depth, pose, tgt_intrinsics, src_intrin
     valid_points = valid_points.unsqueeze(1).repeat(1,projected_img.shape[1],1,1)
     projected_img *= valid_points
     return projected_img, valid_points
-
-#
-# def render_projection_from_point_cloud(mesh, intrinsics, extrinsics, h, w, device, splat_radius):
-#     # Credit Shengze Wang in his DFVS repo
-#     # read mesh and render a depth map
-#     R_cv = torch.tensor(extrinsics[:3, :3]).unsqueeze(0).float().to(device)
-#     T_cv = torch.tensor(extrinsics[:3, 3]).unsqueeze(0).float().to(device)
-#     # NOTE: fx * aspect ratio, needed likely because of Pytorch3d normalized device coordinate
-#     cam_mat = intrinsics.float().unsqueeze(0)
-#
-#     # NOTE: not needed for newer pytorch3d (e.g. 0.6.1)
-#     # aspect_ratio = w/h
-#     # cam_mat[0,0,0] = aspect_ratio * cam_mat[0,1,1]
-#
-#     image_size = torch.tensor([[h, w]]).float()
-#     camera = cameras_from_opencv_projection(R_cv, T_cv, cam_mat, image_size)
-#
-#     raster_settings = PointsRasterizationSettings(
-#         image_size=(h, w),
-#         radius=0.01,
-#         points_per_pixel=10,
-#         bin_size=0
-#     )
-#
-#
-#     # Create a points renderer by compositing points using an alpha compositor (nearer points
-#     # are weighted more heavily). See [1] for an explanation.
-#     rasterizer = PointsRasterizer(cameras=camera, raster_settings=raster_settings).to(device)
-#     dmap = rasterizer(mesh, eps=1e-7).zbuf[..., 0]
-#     renderer = PointsRenderer(
-#         rasterizer=rasterizer,
-#         compositor=AlphaCompositor().to(device)
-#     )
-#     projected_features = renderer(mesh, eps=1e-7)
-#     return projected_features, dmap
-
-
-# def render_tgt_depth_map_from_srcs(src_imgs, src_depths, tgt_intrinsic, src_intrinsics, tgt2src_transforms):
-#     cur_fused_pc = None
-#     # prepare fused point cloud based on the depth map of the source images
-#     src2tgt_transform = tgt2src_transforms.inverse()
-#     for nbs_i in range(src_depths.shape[1]):
-#         curr_pc = pixel2cam(src_depths[:, nbs_i], src_intrinsics[:, nbs_i].inverse())
-#         cam_coords_flat = curr_pc.reshape(src_depths.shape[0], 3, -1)
-#         curr_pc = src2tgt_transform[:, nbs_i, :3, :3] @ cam_coords_flat + src2tgt_transform[:, nbs_i, :3, 3:]
-#
-#         if cur_fused_pc is None:
-#             cur_fused_pc = curr_pc
-#         else:
-#             cur_fused_pc = torch.cat([cur_fused_pc, curr_pc], dim=2)
-#
-#
-#     cur_fused_pc = cur_fused_pc.permute(0, 2, 1)
-#     rendered_tgt_depths = []
-#     for batch_i in range(src_depths.shape[0]):
-#         fused_pc = Pointclouds(points=[cur_fused_pc[batch_i]], features=[torch.zeros_like(cur_fused_pc[batch_i])])
-#         dmap_all_layers = render_projection_from_point_cloud(fused_pc, tgt_intrinsic[batch_i], np.eye(4), src_imgs.shape[-2], src_imgs.shape[-1],
-#                                                              cur_fused_pc.device, splat_radius=0.006).zbuf
-#         dmap_front = dmap_all_layers[...,0]
-#         rendered_tgt_depths.append(dmap_front)
-#     rendered_tgt_depths = torch.stack(rendered_tgt_depths)
-#     return rendered_tgt_depths
-
-
-# def render_projection_from_srcs(src_features, src_depths, tgt_intrinsic, src_intrinsics, src2tgt_transform):
-#     cur_fused_pc = None
-#     cur_fused_features = None
-#     # prepare fused point cloud based on the depth map of the source images
-#     for nbs_i in range(src_depths.shape[1]):
-#         curr_pc = pixel2cam(src_depths[:, nbs_i], src_intrinsics[:, nbs_i].inverse())
-#         cam_coords_flat = curr_pc.reshape(src_depths.shape[0], 3, -1)
-#         curr_pc = torch.bmm(src2tgt_transform[:, nbs_i, :3, :3], cam_coords_flat) + src2tgt_transform[:, nbs_i, :3, 3:]
-#
-#         curr_feature = src_features[:, nbs_i].reshape(src_features.shape[0], src_features.shape[2], -1)
-#         if cur_fused_pc is None:
-#             cur_fused_pc = curr_pc
-#             cur_fused_features = curr_feature
-#         else:
-#             cur_fused_pc = torch.cat([cur_fused_pc, curr_pc], dim=2)
-#             cur_fused_features = torch.cat([cur_fused_features, curr_feature], dim=2)
-#
-#     cur_fused_pc = cur_fused_pc.permute(0, 2, 1)
-#     cur_fused_features = cur_fused_features.permute(0, 2, 1)
-#     rendered_tgt_depths = []
-#     projected_features = []
-#     for batch_i in range(src_depths.shape[0]):
-#         fused_pc = Pointclouds(points=[cur_fused_pc[batch_i]], features=[cur_fused_features[batch_i]])
-#         projected_feature, dmap_front = render_projection_from_point_cloud(fused_pc, tgt_intrinsic[batch_i], np.eye(4), src_features.shape[-2], src_features.shape[-1],
-#                                                                cur_fused_pc.device, splat_radius=0.006)
-#         projected_features.append((projected_feature[0]))
-#         rendered_tgt_depths.append(dmap_front[0])
-#     rendered_tgt_depths = torch.stack(rendered_tgt_depths).unsqueeze(-1)
-#     projected_features = torch.stack(projected_features)
-#     rendered_tgt_depths = rendered_tgt_depths.permute(0, 3, 1, 2)
-#     projected_features = projected_features.permute(0, 3, 1, 2)
-#     return rendered_tgt_depths, projected_features
-#
-
 
 @torch.no_grad()
 def render_projection_from_srcs_fast(src_features, src_depths, tgt_intrinsic, src_intrinsics, src2tgt_transform,

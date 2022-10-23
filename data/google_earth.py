@@ -1,3 +1,7 @@
+# SGAM: Building a Virtual 3D World through Simultaneous Generation and Mapping
+# Authored by Yuan Shen, Wei-Chiu Ma and Shenlong Wang
+# University of Illinois at Urbana-Champaign and Massachusetts Institute of Technology
+
 import json
 import os
 from tqdm import tqdm
@@ -33,7 +37,7 @@ class GoogleEarthBase(Dataset, PRNGMixin):
         self.depth_range = depth_range
         self.dataset = dataset
         self.image_resolution = image_resolution
-        self.dataset_dir = dataset_dir #"/shared/rsaas/yshen47/GoogleEarthDataset" #"/shared/rsaas/yshen47/blender_3d_large"
+        self.dataset_dir = dataset_dir
         if not os.path.exists(self.dataset_dir):
             self.dataset_dir = "/shared/rsaas/yshen47/GoogleEarthDataset"
 
@@ -46,16 +50,6 @@ class GoogleEarthBase(Dataset, PRNGMixin):
         self.K[0] = self.K[0] * self.image_resolution[1] / 512
         self.K[1] = self.K[1] * self.image_resolution[0] / 512
 
-        #with open(f"{self.sparse_dir}/{self.split}.txt") as f:
-        #    fully_visible_file_list = [l.strip().split("/")[-2:] for l in f.readlines()]
-        #fully_visible_file_map = {}
-        #for l in fully_visible_file_list:
-        #    #scene_name = l[0]
-        #    #image_name = l[1]
-        #    #if scene_name not in fully_visible_file_map:
-        #    #    fully_visible_file_map[scene_name] = []
-        #    #fully_visible_file_map[scene_name].append(image_name)
-
         for grid_transform_path in sorted(Path(self.dataset_dir, self.split).glob("*")):
             if 'chicago' in str(grid_transform_path):
                 continue
@@ -63,11 +57,7 @@ class GoogleEarthBase(Dataset, PRNGMixin):
             print(grid_transform_path)
             with open(str(grid_transform_path / "transforms.json"), 'r') as f:
                 curr_transform = json.load(f)
-                #if os.path.exists(str(grid_transform_path / "networkx.gml")):
-                    #g = nx.read_gml(str(grid_transform_path / "networkx.gml"))
-                #else:
-                g = self.build_graph_from_transform(curr_transform['frames'], grid_transform_path)#, fully_visible_file_map[scene_name])
-                #    nx.write_gml(g, str(grid_transform_path / "networkx.gml"))
+                g = self.build_graph_from_transform(curr_transform['frames'], grid_transform_path)
                 self.grids.append(g)
                 self.cumulative_sum.append(len(g.nodes) + self.cumulative_sum[-1])
 
@@ -82,8 +72,6 @@ class GoogleEarthBase(Dataset, PRNGMixin):
             if not transform['is_valid']:
                 continue
             frame_id = int(transform['file_path'][-9:-4])
-            #if self.use_fully_visible and f"im_{frame_id:05d}.png" not in fully_visible_list:
-            #    continue
             g.add_nodes_from([(frame_id,
                                {
                                     "frame_id": frame_id,
@@ -93,10 +81,8 @@ class GoogleEarthBase(Dataset, PRNGMixin):
                                     "rgb_path": str(grid_transform_path / f"im_{frame_id:05d}.png"),
                                     "depth_path": str(grid_transform_path / f"dm_{frame_id:05d}.npy"),
                                     })])
-            #print(str(grid_transform_path / f"im_{frame_id:05d}.png"))
             if len(g) == 900 and self.split != 'train':  #TODO: overfit
                 break
-        # print(len(g))
         node_keys = sorted(g.nodes)
         for i in tqdm(range(len(g))):
             for j in range(i+1, len(g)):

@@ -1,3 +1,7 @@
+# SGAM: Building a Virtual 3D World through Simultaneous Generation and Mapping
+# Authored by Yuan Shen, Wei-Chiu Ma and Shenlong Wang
+# University of Illinois at Urbana-Champaign and Massachusetts Institute of Technology
+
 from pytorch_lightning.loggers import WandbLogger
 from data.utils.utils import *
 import copy
@@ -171,7 +175,7 @@ if __name__ == "__main__":
         trainer = Trainer.from_argparse_args(trainer_opt, **trainer_kwargs)
         wandb_logger = WandbLogger(
 				                    entity="generating_sfm",
-                                   project='cvpr2023',
+                                   project='SGAM',
                                    save_dir=logdir,
                                    name=logdir.split('/')[-1],
                                 )

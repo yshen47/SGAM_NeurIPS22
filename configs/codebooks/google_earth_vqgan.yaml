@@ -3,10 +3,9 @@ model:
   base_learning_rate: 4.5e-6
   target: sgam.generative_sensing_module.model.VQModel
   params:
-    phase: codebook # conditional_generation or codebook
+    phase: codebook
     embed_dim: 256
     n_embed: 4096
-#    ckpt_path: logs/2022-10-02T18-22-39_google_earth_vqgan/checkpoints/last.ckpt
     vq_step_threshold: 0
     use_extrapolation_mask: True
     test_time_optimization_config:
@@ -21,14 +20,6 @@ model:
       inactive_threshold: 0.9
       train_feature_buffer_size: 1024
       frequency: 1024
-
-    transformer_config:
-      use_mask_git_transformer: False
-      n_layers: 24
-      dim: 512
-      hidden_dim: 1024
-      num_image_tokens: 16
-      num_codebook_vectors: 1024 # has to be the same as n_embed in model
 
     ddconfig:
       double_z: False

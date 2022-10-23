@@ -83,12 +83,12 @@ We provide our trained model on [GoogleEarth-Infinite](https://drive.google.com/
    SGAM   
    └───trained_models
        └───google_earth
-       │   │   XXX.yaml
-       │   │   last.ckpt
+       │   │   config.yaml
+       │   │   XXX.ckpt
        │    
        └───clevr-infinite   
-           │   XXX.yaml
-           │   last.ckpt
+           │   config.yaml
+           │   XXX.ckpt
    ```
 ## Training
 1. VQGAN codebook training. 

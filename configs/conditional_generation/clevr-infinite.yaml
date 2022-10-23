@@ -3,22 +3,12 @@ model:
   base_learning_rate: 4.5e-6
   target: sgam.generative_sensing_module.model.VQModel
   params:
-    phase: conditional_generation # conditional_generation or codebook
+    phase: conditional_generation
     embed_dim: 256
     n_embed: 16384
-    ckpt_path: trained_models/blender/last.ckpt
+    ckpt_path: trained_models/clevr-infinite/last.ckpt
     vq_step_threshold: 0
     use_extrapolation_mask: True
-#    kmean_init_codebook_path: logs/kmean_codebook_embedding_init/kmeans_init_embedding_8192.npy
-
-    mae_config:
-      mask_ratio: 0
-      token_id_embedding_size: 32
-
-    test_time_optimization_config:
-      use_test_time_optimization: False
-      optimization_iteration_count: 32
-      learning_rate: 1e-3
 
     online_kmeans_config:
       do_online_kmeans_clustering: False
@@ -58,7 +48,7 @@ data:
     n_src: 2
     dataset: clevr-infinite
     depth_range: [ 7, 16 ]
-    phase: conditional_generation # should be the same as model.phase parameter
+    phase: conditional_generation
     dataset_dir: /projects/perception/datasets/blender_3d_large # /media/yuan/T7_red/blender_3d_large
     use_depth: True
     image_resolution: [256, 256]
