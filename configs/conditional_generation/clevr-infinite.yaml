@@ -1,0 +1,64 @@
+log_keywords: model.params.phase, data.params.dataset
+model:
+  base_learning_rate: 4.5e-6
+  target: sgam.generative_sensing_module.model.VQModel
+  params:
+    phase: conditional_generation # conditional_generation or codebook
+    embed_dim: 256
+    n_embed: 16384
+    ckpt_path: trained_models/blender/last.ckpt
+    vq_step_threshold: 0
+    use_extrapolation_mask: True
+#    kmean_init_codebook_path: logs/kmean_codebook_embedding_init/kmeans_init_embedding_8192.npy
+
+    mae_config:
+      mask_ratio: 0
+      token_id_embedding_size: 32
+
+    test_time_optimization_config:
+      use_test_time_optimization: False
+      optimization_iteration_count: 32
+      learning_rate: 1e-3
+
+    online_kmeans_config:
+      do_online_kmeans_clustering: False
+      online_kmeans_word_timeout: 10
+      inactive_threshold: 0.4
+      train_feature_buffer_size: 1000
+
+    ddconfig:
+      double_z: False
+      z_channels: 256
+      resolution: 64
+      in_channels: 4
+      out_ch: 4
+      ch: 128
+      ch_mult: [ 1,1,2,2,4]  # num_down = len(ch_mult)-1
+      num_res_blocks: 2
+      attn_resolutions: [16]
+      dropout: 0.0
+      use_vae: False
+
+    lossconfig:
+      target: sgam.generative_sensing_module.modules.losses.vqperceptual.VQLPIPSWithDiscriminator
+      params:
+        use_discriminative_loss: True
+        disc_conditional: False
+        disc_in_channels: 4
+        disc_start: 10000
+        disc_weight: 0.8
+        codebook_weight: 1.0
+        disp_loss_weight: 1.5
+
+data:
+  target: data.utils.utils.DataModuleFromConfig
+  params:
+    batch_size: 16
+    num_workers: 4
+    n_src: 2
+    dataset: clevr-infinite
+    depth_range: [ 7, 16 ]
+    phase: conditional_generation # should be the same as model.phase parameter
+    dataset_dir: /projects/perception/datasets/blender_3d_large # /media/yuan/T7_red/blender_3d_large
+    use_depth: True
+    image_resolution: [256, 256]

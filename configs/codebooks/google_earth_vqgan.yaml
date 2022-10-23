@@ -1,0 +1,69 @@
+log_keywords: model.params.phase
+model:
+  base_learning_rate: 4.5e-6
+  target: sgam.generative_sensing_module.model.VQModel
+  params:
+    phase: codebook # conditional_generation or codebook
+    embed_dim: 256
+    n_embed: 4096
+#    ckpt_path: logs/2022-10-02T18-22-39_google_earth_vqgan/checkpoints/last.ckpt
+    vq_step_threshold: 0
+    use_extrapolation_mask: True
+    test_time_optimization_config:
+      use_test_time_optimization: False
+      optimization_iteration_count: 32
+      learning_rate: 1e-3
+
+    online_kmeans_config:
+      do_online_kmeans_clustering: False
+      start_global_step: 0
+      online_kmeans_word_timeout: 10
+      inactive_threshold: 0.9
+      train_feature_buffer_size: 1024
+      frequency: 1024
+
+    transformer_config:
+      use_mask_git_transformer: False
+      n_layers: 24
+      dim: 512
+      hidden_dim: 1024
+      num_image_tokens: 16
+      num_codebook_vectors: 1024 # has to be the same as n_embed in model
+
+    ddconfig:
+      double_z: False
+      z_channels: 256
+      resolution: 64
+      in_channels: 4
+      out_ch: 4
+      ch: 128
+      ch_mult: [ 1,1,2,2,4]  # num_down = len(ch_mult)-1
+      num_res_blocks: 2
+      attn_resolutions: [16]
+      dropout: 0.0
+      use_vae: False
+
+    lossconfig:
+      target: sgam.generative_sensing_module.modules.losses.vqperceptual.VQLPIPSWithDiscriminator
+      params:
+        use_discriminative_loss: True
+        disc_conditional: False
+        disc_in_channels: 4
+        disc_start: 10000
+        disc_weight: 0.8
+        codebook_weight: 1.0
+        disp_loss_weight: 1.5
+        perceptual_weight: 1
+        disc_update_every_n_step: 1
+
+data:
+  target: data.utils.utils.DataModuleFromConfig
+  params:
+    batch_size: 3
+    num_workers: 0
+    dataset: google_earth
+    depth_range: [0.099975586, 4.765625]
+    phase: codebook # should be the same as model.phase parameter
+    dataset_dir: /projects/perception/datasets/GoogleEarthDataset
+    use_depth: True
+    image_resolution: [256, 256]
