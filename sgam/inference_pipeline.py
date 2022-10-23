@@ -115,7 +115,7 @@ class InfiniteSceneGeneration:
                 vox_length = 0.05
                 self.volume = o3d.pipelines.integration.ScalableTSDFVolume(
                     voxel_length=vox_length,
-                    sdf_trunc=100 * vox_length,
+                    sdf_trunc=10 * vox_length,
                     color_type=o3d.pipelines.integration.TSDFVolumeColorType.RGB8)
             elif data in ['google_earth', 'kitti360']:
                 vox_length = 0.01
@@ -129,8 +129,8 @@ class InfiniteSceneGeneration:
             if not self.offscreen_rendering:
                 self.vis = o3d.visualization.Visualizer()
                 if data == 'clevr-infinite':
-                    self.vis.create_window(width=256, height=64, visible=True)
-                elif data in ['google_earth', 'kitti360']:
+                    self.vis.create_window(width=256, height=256, visible=True)
+                elif data in ['google_earth']:
                     self.vis.create_window(width=256, height=256, visible=True)
                 else:
                     raise NotImplementedError
@@ -784,7 +784,7 @@ class InfiniteSceneGeneration:
 
         if self.offscreen_rendering:
             if self.data == 'clevr-infinite':
-                vis = o3d.visualization.rendering.OffscreenRenderer(256, 64, headless=True)
+                vis = o3d.visualization.rendering.OffscreenRenderer(256, 256, headless=True)
             elif self.data == 'google_earth':
                 vis = o3d.visualization.rendering.OffscreenRenderer(256, 256, headless=True)
             else:
@@ -1020,7 +1020,7 @@ class InfiniteSceneGeneration:
                     area_counts[curr_index] = 0
                     check_nearby((i, j))
                     curr_index += 1
-        res = np.zeros([64, 256])
+        res = np.zeros([256, 256])
         for k, v in area_counts.items():
             if v > 4000:
                 res += (visited == k)
