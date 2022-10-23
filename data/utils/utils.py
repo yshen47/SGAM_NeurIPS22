@@ -203,25 +203,7 @@ class DataModuleFromConfig(pl.LightningDataModule):
         self.num_workers = num_workers if num_workers is not None else batch_size*2
         self.phase = phase
         if phase == 'conditional_generation':
-            if dataset == 'kitti360':
-                train = {
-                    "target": "data.kitti360.Kitti360Train",
-                    "params": {
-                        'dataset': dataset,
-                        'dataset_dir': dataset_dir,
-                        'n_src': n_src,
-                    }
-                }
-                validation = {
-                    "target": "data.kitti360.Kitti360Validation",
-                    "params": {
-                        'dataset': dataset,
-                        'dataset_dir': dataset_dir,
-                        'n_src': n_src,
-                    }
-                }
-
-            elif dataset == 'google_earth':
+            if dataset == 'google_earth':
                 train = {
                     "target": "data.google_earth.GoogleEarthTrain",
                     "params": {
@@ -242,7 +224,7 @@ class DataModuleFromConfig(pl.LightningDataModule):
                 }
             elif dataset == 'clevr-infinite':
                 train = {
-                    "target": "data.blender_3d.Blender3dTrain",
+                    "target": "data.clevr-infinite.Blender3dTrain",
                     "params": {
                         'dataset': dataset,
                         'dataset_dir': dataset_dir,
@@ -251,7 +233,7 @@ class DataModuleFromConfig(pl.LightningDataModule):
                     }
                 }
                 validation = {
-                    "target": "data.blender_3d.Blender3dValidation",
+                    "target": "data.clevr-infinite.Blender3dValidation",
                     "params": {
                         'dataset': dataset,
                         'dataset_dir': dataset_dir,
