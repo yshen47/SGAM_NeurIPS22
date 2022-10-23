@@ -12,7 +12,6 @@ try:
     import open3d as o3d
 except:
     pass
-from autolab_core import CameraIntrinsics
 from tqdm import tqdm
 import numpy as np
 from pathlib import Path
