@@ -4,7 +4,7 @@ matplotlib
 autolab_core==1.1.1
 opencv-python
 albumentations==1.1.0
-wandb==0.12.11
+wandb
 open3d==0.15.2
 einops==0.4.1
 ninja==1.10.2.3
