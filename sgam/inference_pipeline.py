@@ -1054,25 +1054,14 @@ class InfiniteSceneGeneration:
             Rt[:3, 3] = t
             predicted_depth = np.load(str(dms[i]))
             predicted_color = cv2.cvtColor(cv2.imread(str(rgbs[i])), cv2.COLOR_BGR2RGB)
-            # if i == 0 and self.data == 'clevr-infinite':
-            #     h, w = predicted_depth.shape[:2]
-            #     x = np.linspace(0, w - 1, w)
-            #     y = np.linspace(0, h - 1, h)
-            #     xs, ys = np.meshgrid(x, y)
-            #     predicted_depth = (predicted_depth * K[0][0] / np.sqrt(
-            #         K[0][0] ** 2 + (K[0][2] - ys - 0.5) ** 2 + (K[1][2] - xs - 0.5) ** 2))
 
             predicted_pcd = self.prepare_pcd(predicted_depth, predicted_color, K, Rt)
-            # gt_pcd = prepare_pcd(gt_depth, K, Rt)
             if predicted_pcds is None:
                 predicted_pcds = predicted_pcd
             else:
                 predicted_pcds += predicted_pcd
-            # gt_pcds.append(gt_pcd)
-            # o3d.visualization.draw_geometries([predicted_pcd])
-            #
-            # o3d.visualization.draw_geometries([gt_pcd])
 
-        # o3d.visualization.draw_geometries(gt_pcds)
+        # o3d.visualization.draw_geometries([predicted_pcds])
+
         return predicted_pcds
 
