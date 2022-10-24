@@ -1037,7 +1037,6 @@ class InfiniteSceneGeneration:
 
     def unproject_to_color_point_cloud(self):
         prediction_path = self.grid_transform_path
-        Ks = sorted(prediction_path.glob("K_*_*_*.npy"))
         Rs = sorted(prediction_path.glob("R_*_*_*.npy"))
         ts = sorted(prediction_path.glob("t_*_*_*.npy"))
         dms = sorted(prediction_path.glob("dm_*_*_*.npy"))
@@ -1046,7 +1045,7 @@ class InfiniteSceneGeneration:
         predicted_pcds = None
         for i in tqdm(range(len(rgbs))):
             # print(names[i])
-            K = np.load(str(Ks[0]))
+            K = np.load(str(self.K))
             R = np.load(str(Rs[i]))
             t = np.load(str(ts[i]))
             Rt = np.eye(4)
