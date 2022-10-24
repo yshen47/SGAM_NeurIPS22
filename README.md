@@ -13,7 +13,7 @@ We present a new 3D scene generation framework that simultaneously generates sen
 <img src="assets/overview.png" alt="drawing" width="700"/>
   
 ## Quickstart
-Try [our Colab codebook](https://colab.research.google.com/drive/1nW5oHKsb0e01BdFU-EjsNqJmQNNo294h?usp=sharing) to play our trained models on sample CLEVR-Infinite and GoogleEarth-Infinite dataset!
+Try [our Colab codebook](https://colab.research.google.com/drive/1nW5oHKsb0e01BdFU-EjsNqJmQNNo294h?usp=sharing) to play our trained models on CLEVR-Infinite and GoogleEarth-Infinite!
 ## Installment
   
 - Manual Installment (Only tested on Ubuntu 18.04):
