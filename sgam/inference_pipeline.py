@@ -42,6 +42,7 @@ class InfiniteSceneGeneration:
             image_resolution = (256, 256)
             self.output_dim = (5, 5) if output_dim is None else output_dim
             shutil.copytree('templates/clevr-infinite', grid_transform_path)
+
         elif data == 'google_earth':
             image_resolution = (256, 256)
             self.output_dim = (100, 1) if output_dim is None else output_dim
@@ -66,6 +67,17 @@ class InfiniteSceneGeneration:
             trajectory_shape = 'grid'
             self.num_src = (5 if num_src is None else num_src) if isinstance(dynamic_model, VQModel) else 1
             self.curr = 1
+
+            for dm_path in sorted(grid_transform_path.glob('dm*')):
+                depth = np.load(dm_path)
+                h, w = depth.shape[:2]
+                x = np.linspace(0, w - 1, w)
+                y = np.linspace(0, h - 1, h)
+                xs, ys = np.meshgrid(x, y)
+                depth = (depth * self.K[0][0] / np.sqrt(
+                    self.K[0][0] ** 2 + (self.K[0][2] - ys - 0.5) ** 2 + (self.K[1][2] - xs - 0.5) ** 2))
+                np.save(dm_path, depth)
+
         elif data == 'google_earth':
             trajectory_shape = 'grid'
             self.K = np.array([
@@ -1042,13 +1054,13 @@ class InfiniteSceneGeneration:
             Rt[:3, 3] = t
             predicted_depth = np.load(str(dms[i]))
             predicted_color = cv2.cvtColor(cv2.imread(str(rgbs[i])), cv2.COLOR_BGR2RGB)
-            if i == 0 and self.data == 'clevr-infinite':
-                h, w = predicted_depth.shape[:2]
-                x = np.linspace(0, w - 1, w)
-                y = np.linspace(0, h - 1, h)
-                xs, ys = np.meshgrid(x, y)
-                predicted_depth = (predicted_depth * K[0][0] / np.sqrt(
-                    K[0][0] ** 2 + (K[0][2] - ys - 0.5) ** 2 + (K[1][2] - xs - 0.5) ** 2))
+            # if i == 0 and self.data == 'clevr-infinite':
+            #     h, w = predicted_depth.shape[:2]
+            #     x = np.linspace(0, w - 1, w)
+            #     y = np.linspace(0, h - 1, h)
+            #     xs, ys = np.meshgrid(x, y)
+            #     predicted_depth = (predicted_depth * K[0][0] / np.sqrt(
+            #         K[0][0] ** 2 + (K[0][2] - ys - 0.5) ** 2 + (K[1][2] - xs - 0.5) ** 2))
 
             predicted_pcd = self.prepare_pcd(predicted_depth, predicted_color, K, Rt)
             # gt_pcd = prepare_pcd(gt_depth, K, Rt)
