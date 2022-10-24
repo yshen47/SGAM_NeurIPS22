@@ -1,9 +1,7 @@
 # SGAM: Building a Virtual 3D World through Simultaneous Generation and Mapping
 # Authored by Yuan Shen, Wei-Chiu Ma and Shenlong Wang
 # University of Illinois at Urbana-Champaign and Massachusetts Institute of Technology
-import copy
 import os
-import random
 import shutil
 import torch
 from PIL import Image
@@ -42,7 +40,7 @@ class InfiniteSceneGeneration:
 
         if data == 'clevr-infinite':
             image_resolution = (256, 256)
-            self.output_dim = (30, 30) if output_dim is None else output_dim
+            self.output_dim = (5, 5) if output_dim is None else output_dim
             shutil.copytree('templates/clevr-infinite', grid_transform_path)
         elif data == 'google_earth':
             image_resolution = (256, 256)
@@ -420,24 +418,24 @@ class InfiniteSceneGeneration:
                 res = self.anchor_poses[k]
         return res
 
-    def expand_to_inf(self, return_hs=False):
+    def scene_expansion(self, return_hs=False):
         for i in tqdm(range(self.output_dim[0] * self.output_dim[1]-1)):
             print('curr: ', i)
             with torch.no_grad():
                 tgt_pose_grid_coord = self.next_pose(self.curr)
-                if isinstance(self.dynamic_model, VQModel):
-                    self.one_step_prediction(tgt_pose_grid_coord)
-                else:
-                    self.one_step_prediction_infinite_nature(tgt_pose_grid_coord)
-
-                # self.unproject_to_color_point_cloud()
+                self.one_step_prediction(tgt_pose_grid_coord)
                 self.curr += 1
         print(f"Successfully unrolling, results saved at {self.grid_transform_path}")
+        merged_pcd = self.unproject_to_color_point_cloud()
+        merged_pcd_path = str(self.grid_transform_path / "merged_pcds.ply")
+        o3d.io.write_point_cloud(merged_pcd_path, merged_pcd)
+        print(f"Merged per-view point cloud is saved at {merged_pcd_path}")
+
         if self.use_rgbd_integration:
-            mesh = self.volume.extract_triangle_mesh()
-            mesh.compute_vertex_normals()
-            o3d.io.write_triangle_mesh(str(self.grid_transform_path/ "rgbd_integrated_mesh.ply"), mesh)
-            
+            pcd = self.volume.extract_point_cloud()
+            rgbd_integrated_path = str(self.grid_transform_path / "rgbd_integrated_mesh.ply")
+            o3d.io.write_point_cloud(rgbd_integrated_path, pcd)
+            print(f"RGB-D integrated point cloud is saved at {rgbd_integrated_path}")
 
     def zig_zag_order(self):
         rows = self.output_dim[0]
@@ -1002,11 +1000,6 @@ class InfiniteSceneGeneration:
         return cam_coords * depth.unsqueeze(1)
 
     def prepare_pcd(self, depth, color, K, Rt):
-        x = np.linspace(0, 256 - 1, 256)
-        y = np.linspace(0, 256 - 1, 256)
-        xs, ys = np.meshgrid(x, y)
-        depth = (depth * K[0][0] / np.sqrt(
-            K[0][0] ** 2 + (K[0][2] - ys - 0.5) ** 2 + (K[1][2] - xs - 0.5) ** 2))
 
         h, w = depth.shape
         x = np.linspace(0, w - 1, w)
@@ -1032,19 +1025,16 @@ class InfiniteSceneGeneration:
 
     def unproject_to_color_point_cloud(self):
         prediction_path = self.grid_transform_path
-        Ks = sorted(prediction_path.glob("K*"))
-        Rs = sorted(prediction_path.glob("R*"))
-        ts = sorted(prediction_path.glob("t*"))
-        dms = sorted(prediction_path.glob("dm*"))
-        rgbs = sorted(prediction_path.glob("im*"))
+        Ks = sorted(prediction_path.glob("K_*_*_*.npy"))
+        Rs = sorted(prediction_path.glob("R_*_*_*.npy"))
+        ts = sorted(prediction_path.glob("t_*_*_*.npy"))
+        dms = sorted(prediction_path.glob("dm_*_*_*.npy"))
+        rgbs = sorted(prediction_path.glob("im_*_*_*.png"))
 
-        pcds = []
-
-        predicted_pcds = []
-        gt_pcds = []
+        predicted_pcds = None
         for i in tqdm(range(len(rgbs))):
             # print(names[i])
-            K = np.load(str(Ks[i]))
+            K = np.load(str(Ks[0]))
             R = np.load(str(Rs[i]))
             t = np.load(str(ts[i]))
             Rt = np.eye(4)
@@ -1052,17 +1042,25 @@ class InfiniteSceneGeneration:
             Rt[:3, 3] = t
             predicted_depth = np.load(str(dms[i]))
             predicted_color = cv2.cvtColor(cv2.imread(str(rgbs[i])), cv2.COLOR_BGR2RGB)
-            # for j in range(predicted_depth.shape[0]):
-            #     for k in range(predicted_depth.shape[1]):
-            #         predicted_depth[j, k] = predicted_depth[j, k] * K[0][0] / math.sqrt(K[0][0] ** 2 + (K[0][2] - j - 0.5) ** 2 + (K[1][2] - k - 0.5) ** 2)
+            if i == 0 and self.data == 'clevr-infinite':
+                h, w = predicted_depth.shape[:2]
+                x = np.linspace(0, w - 1, w)
+                y = np.linspace(0, h - 1, h)
+                xs, ys = np.meshgrid(x, y)
+                predicted_depth = (predicted_depth * K[0][0] / np.sqrt(
+                    K[0][0] ** 2 + (K[0][2] - ys - 0.5) ** 2 + (K[1][2] - xs - 0.5) ** 2))
 
             predicted_pcd = self.prepare_pcd(predicted_depth, predicted_color, K, Rt)
             # gt_pcd = prepare_pcd(gt_depth, K, Rt)
-            predicted_pcds.append(predicted_pcd)
+            if predicted_pcds is None:
+                predicted_pcds = predicted_pcd
+            else:
+                predicted_pcds += predicted_pcd
             # gt_pcds.append(gt_pcd)
             # o3d.visualization.draw_geometries([predicted_pcd])
             #
             # o3d.visualization.draw_geometries([gt_pcd])
 
         # o3d.visualization.draw_geometries(gt_pcds)
-        o3d.visualization.draw_geometries(predicted_pcds)
+        return predicted_pcds
+

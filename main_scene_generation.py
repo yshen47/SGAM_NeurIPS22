@@ -51,4 +51,4 @@ if __name__ == '__main__':
                                         seed_index=args.seed_index,
                                         use_rgbd_integration=args.use_rgbd_integration,
                                         offscreen_rendering=args.offscreen_rendering)
-    framework.expand_to_inf()
+    framework.scene_expansion()
