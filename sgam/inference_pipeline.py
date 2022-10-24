@@ -40,7 +40,7 @@ class InfiniteSceneGeneration:
 
         if data == 'clevr-infinite':
             image_resolution = (256, 256)
-            self.output_dim = (5, 5) if output_dim is None else output_dim
+            self.output_dim = (20, 20) if output_dim is None else output_dim
             shutil.copytree('templates/clevr-infinite', grid_transform_path)
 
         elif data == 'google_earth':
@@ -1038,29 +1038,26 @@ class InfiniteSceneGeneration:
     def unproject_to_color_point_cloud(self):
         prediction_path = self.grid_transform_path
         Rs = sorted(prediction_path.glob("R_*_*_*.npy"))
-        ts = sorted(prediction_path.glob("t_*_*_*.npy"))
-        dms = sorted(prediction_path.glob("dm_*_*_*.npy"))
-        rgbs = sorted(prediction_path.glob("im_*_*_*.png"))
 
         predicted_pcds = None
-        for i in tqdm(range(len(rgbs))):
-            # print(names[i])
-            K = np.load(str(self.K))
-            R = np.load(str(Rs[i]))
-            t = np.load(str(ts[i]))
+        for R_path in tqdm(Rs):
+            K = self.K
+            R = np.load(str(R_path))
+            t_path = str(R_path).replace("R", "t")
+            dm_path = str(R_path).replace("R", "dm")
+            im_path = str(R_path).replace("R", "im").replace('npy', 'png')
+            t = np.load(t_path)
             Rt = np.eye(4)
             Rt[:3, :3] = R
             Rt[:3, 3] = t
-            predicted_depth = np.load(str(dms[i]))
-            predicted_color = cv2.cvtColor(cv2.imread(str(rgbs[i])), cv2.COLOR_BGR2RGB)
+            predicted_depth = np.load(dm_path)
+            predicted_color = cv2.cvtColor(cv2.imread(im_path), cv2.COLOR_BGR2RGB)
 
             predicted_pcd = self.prepare_pcd(predicted_depth, predicted_color, K, Rt)
             if predicted_pcds is None:
                 predicted_pcds = predicted_pcd
             else:
                 predicted_pcds += predicted_pcd
-
-        # o3d.visualization.draw_geometries([predicted_pcds])
 
         return predicted_pcds
 
