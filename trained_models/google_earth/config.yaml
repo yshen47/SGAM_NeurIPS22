@@ -1,0 +1,75 @@
+log_keywords: model.params.phase
+model:
+  base_learning_rate: 4.5e-06
+  target: sgam.generative_sensing_module.model.VQModel
+  params:
+    phase: conditional_generation
+    embed_dim: 256
+    n_embed: 4096
+    ckpt_path: trained_models/google_earth/N-Step-Checkpoint_2_70000.ckpt
+    vq_step_threshold: 0
+    use_extrapolation_mask: true
+    online_kmeans_config:
+      do_online_kmeans_clustering: false
+      online_kmeans_word_timeout: 10
+      inactive_threshold: 0.4
+      train_feature_buffer_size: 1000
+    ddconfig:
+      double_z: false
+      z_channels: 256
+      resolution: 64
+      in_channels: 4
+      out_ch: 4
+      ch: 128
+      ch_mult:
+      - 1
+      - 1
+      - 2
+      - 2
+      - 4
+      num_res_blocks: 2
+      attn_resolutions:
+      - 16
+      dropout: 0.0
+      use_vae: false
+    lossconfig:
+      target: sgam.generative_sensing_module.modules.losses.vqperceptual.VQLPIPSWithDiscriminator
+      params:
+        use_discriminative_loss: true
+        disc_conditional: false
+        disc_in_channels: 4
+        disc_start: 10000
+        disc_weight: 0.8
+        codebook_weight: 1.0
+        disp_loss_weight: 1.5
+    data_config:
+      batch_size: 4
+      num_workers: 0
+      n_src: 1
+      dataset: google_earth
+      depth_range:
+      - 0.099975586
+      - 4.765625
+      phase: conditional_generation
+      dataset_dir: /projects/perception/datasets/GoogleEarthDataset
+      use_depth: true
+      image_resolution:
+      - 256
+      - 256
+    logdir: logs/SGAM2-CVPR2023_phase_conditional_generation_2022-10-19T23-20-40
+data:
+  target: data.utils.utils.DataModuleFromConfig
+  params:
+    batch_size: 4
+    num_workers: 0
+    n_src: 1
+    dataset: google_earth
+    depth_range:
+    - 0.099975586
+    - 4.765625
+    phase: conditional_generation
+    dataset_dir: /projects/perception/datasets/GoogleEarthDataset
+    use_depth: true
+    image_resolution:
+    - 256
+    - 256

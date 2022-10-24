@@ -1,5 +1,5 @@
 .idea
 *.pyc
-trained_models
+*.ckpt
 logs/
 grid_res/
