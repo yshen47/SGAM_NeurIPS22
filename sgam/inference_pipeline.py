@@ -433,6 +433,11 @@ class InfiniteSceneGeneration:
                 # self.unproject_to_color_point_cloud()
                 self.curr += 1
         print(f"Successfully unrolling, results saved at {self.grid_transform_path}")
+        if self.use_rgbd_integration:
+            mesh = self.volume.extract_triangle_mesh()
+            mesh.compute_vertex_normals()
+            o3d.io.write_triangle_mesh(str(self.grid_transform_path/ "rgbd_integrated_mesh.ply"), mesh)
+            
 
     def zig_zag_order(self):
         rows = self.output_dim[0]
