@@ -8,6 +8,7 @@ Unversity of Illinois at Urbana-Champaign<sup>1</sup>, Massachusetts Institute o
 
 <img src="assets/large_scale_google_earth.gif" width="256">
 (The GIF animation above is generated via SGAM with only the first RGB-D frame known.)
+
 ## TL;DR
 We present a new 3D scene generation framework that simultaneously generates sensor data at novel viewpoints and builds a 3D map. Our framework is illustrated in the diagram below. 
 <img src="assets/overview.png" alt="drawing" width="700"/>
