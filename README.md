@@ -7,9 +7,9 @@ Unversity of Illinois at Urbana-Champaign<sup>1</sup>, Massachusetts Institute o
 [Paper link](https://nips.cc/Conferences/2022/Schedule?showEvent=55439) │ [Project Page](https://yshen47.github.io/sgam) │ [Colab Quickstart](https://colab.research.google.com/drive/1nW5oHKsb0e01BdFU-EjsNqJmQNNo294h?usp=sharing)
 
 <img src="assets/large_scale_google_earth.gif" width="256">
-
+(The GIF animation above is generated via SGAM with only the first RGB-D frame known.)
 ## TL;DR
-We present a new 3D scene generation framework that simultaneously generates sensor data at novel viewpoints and builds a 3D map. Our framework is illustrated in the diagram below. The GIF animation above is generated via SGAM with only the first RGB-D frame known.
+We present a new 3D scene generation framework that simultaneously generates sensor data at novel viewpoints and builds a 3D map. Our framework is illustrated in the diagram below. 
 <img src="assets/overview.png" alt="drawing" width="700"/>
   
 ## Quickstart
