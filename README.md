@@ -4,7 +4,7 @@
 [Shenlong Wang<sup>1</sup>](https://shenlong.web.illinois.edu/)<br/>
 Unversity of Illinois at Urbana-Champaign<sup>1</sup>, Massachusetts Institute of Technology<sup>2</sup>
 #### Accepted at NeurIPS 2022.  
-[Paper link](https://nips.cc/Conferences/2022/Schedule?showEvent=55439) │ [Project Page](https://yshen47.github.io/sgam) │ [Colab Quickstart](https://colab.research.google.com/drive/1nW5oHKsb0e01BdFU-EjsNqJmQNNo294h?usp=sharing)
+[Paper link](https://openreview.net/pdf?id=17KCLTbRymw) │ [Project Page](https://yshen47.github.io/sgam) │ [Colab Quickstart](https://colab.research.google.com/drive/1nW5oHKsb0e01BdFU-EjsNqJmQNNo294h?usp=sharing)
 
 <img src="assets/large_scale_google_earth.gif" width="256">
 (The GIF animation above is generated via SGAM with only the first RGB-D frame known.)
