@@ -30,6 +30,10 @@ Try [our Colab codebook](https://colab.research.google.com/drive/1nW5oHKsb0e01Bd
      pip install torch==1.12.1+cu113 torchvision==0.13.1+cu113
      pip install pytorch_lightning==1.5.10
      ```
+     
+## Video 
+[![youtube video link https://www.youtube.com/watch?v=GrtooGn_Rws](assets/overview.png)](https://www.youtube.com/watch?v=GrtooGn_Rws)
+
 ## Data
 ### CLEVR-Infinite Dataset 
   - Note the depth is nonlinear when we render from blender. Checkout how we convert the depth from nonlinear to linear in line 103 of data/clevr-infinite.py
