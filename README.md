@@ -32,7 +32,7 @@ Try [our Colab codebook](https://colab.research.google.com/drive/1nW5oHKsb0e01Bd
      ```
      
 ## Video 
-[![youtube video link https://www.youtube.com/watch?v=GrtooGn_Rws](assets/overview.png)](https://www.youtube.com/watch?v=GrtooGn_Rws)
+[![youtube video link https://www.youtube.com/watch?v=GrtooGn_Rws](assets/youtube-thumbnail.png)](https://www.youtube.com/watch?v=GrtooGn_Rws)
 
 ## Data
 ### CLEVR-Infinite Dataset 
