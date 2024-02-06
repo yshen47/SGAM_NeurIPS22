@@ -62,7 +62,7 @@ Try [our Colab codebook](https://colab.research.google.com/drive/1nW5oHKsb0e01Bd
     ```
       
 ### GoogleEarth-Infinite Dataset
-  - Please reach out us by email if you hope to get access to the dataset.
+  - Train, val and test set are available at [this google drive link](https://drive.google.com/drive/folders/1Tl-j2ZlSOa9T4nSQndVrOWPY02I5sPTL?usp=share_link).
 
 ## Trained Models
 We provide our trained model on [GoogleEarth-Infinite](https://drive.google.com/drive/folders/1XzyLEFOWOktIgWbt3elMr5O6hbSWB7X3?usp=sharing) and [CLEVR-Infinite](https://drive.google.com/drive/folders/1AF5Q-Wq19YBAxFFjGuH6nWR-BPaKHmT7?usp=sharing). Please download and organize the pre-trained checkpoints as follows:
