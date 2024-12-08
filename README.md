@@ -6,8 +6,14 @@ Unversity of Illinois at Urbana-Champaign<sup>1</sup>, Massachusetts Institute o
 #### Accepted at NeurIPS 2022.  
 [Paper link](https://openreview.net/pdf?id=17KCLTbRymw) │ [Project Page](https://yshen47.github.io/sgam) │ [Colab Quickstart](https://colab.research.google.com/drive/1nW5oHKsb0e01BdFU-EjsNqJmQNNo294h?usp=sharing)
 
+<video width="600" controls>
+  <source src="assets/sgam_2024_small.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+(SGAM in 2024 with latest pre-trained 2D priors)
+
 <img src="assets/large_scale_google_earth.gif" width="256">
-(The GIF animation above is generated via SGAM with only the first RGB-D frame known.)
+(The GIF animation above is generated via SGAM with only the first RGB-D frame known in 2022.)
 
 ## TL;DR
 We present a new 3D scene generation framework that simultaneously generates sensor data at novel viewpoints and builds a 3D map. Our framework is illustrated in the diagram below. 
